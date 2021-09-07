@@ -67,7 +67,7 @@ constexpr byte ALARM_BITS = ALRM1_SET;
 
 DS3231 clock;
 RTClib rtclib;
-char time_str[] = "0000/00/00,00:00:00";
+char time_str[] = "0000-00-00,00:00:00";
 
 File logfile;
 
