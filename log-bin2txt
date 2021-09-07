@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import struct
+import time
+
+TEXT_LOG_PREAMBLE = 'TextLog_v'
+TEXT_LOG_HEADER = 'utc_date,utc_time,temperature,humidity'
+BINARY_LOG_PREAMBLE = 'BinaryLog_v'
+ENDIANNESS_SIGNATURE = (78 << 24) | (185 << 16) | (219 << 8) | (110)
+
+def get_cli_args():
+  parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="Convert an optimized binary log to a readable, text log.")
+
+  parser.add_argument('binary_logfile', help="Path to the log file in binary format.")
+  parser.add_argument('output_filepath', help="Path to write the text output to.")
+
+  return parser.parse_args()
+
+def readcheck(binfile, numbytes, exit=False):
+  b = binfile.read(numbytes)
+  if len(b) < numbytes:
+    if exit:
+      print("Log data corrupted.")
+      sys.exit(-1)
+    else:
+      return b''
+  return b
+
+def v1_conversion(binfile, txtfile):
+  b = readcheck(binfile, 4, True)
+  signature = struct.unpack('<I', b)[0]
+  if signature == ENDIANNESS_SIGNATURE:
+    endianness = '<'
+  else:
+    signature = struct.unpack('>I', b)[0]
+    if signature == ENDIANNESS_SIGNATURE:
+      endianness = '>'
+    else:
+      print("Invalid log file endianness. Exiting.")
+      sys.exit(-1)
+  
+  b = readcheck(binfile, 4, True)
+  int_size = struct.unpack(f'{endianness}I', b)[0]
+  int_format = 'I' if int_size == 4 else 'Q'
+
+  b = readcheck(binfile, 4, True)
+  float_size = struct.unpack(f'{endianness}I', b)[0]
+  float_format = 'f' if float_size == 4 else 'd'
+
+  print(TEXT_LOG_PREAMBLE + '1', file=txtfile)
+  print(TEXT_LOG_HEADER, file=txtfile)
+  while True:
+    b = binfile.read(4)
+    if len(b) < 4: break
+    unixtime = struct.unpack(f'{endianness}I', b)[0]
+    b = binfile.read(4)
+    if len(b) < 4:
+      print("Log data corrupted.")
+      sys.exit(-1)
+    temp = struct.unpack(f'{endianness}{float_format}', b)[0]
+    b = binfile.read(4)
+    if len(b) < 4:
+      print("Log data corrupted.")
+      sys.exit(-1)
+    hum = struct.unpack(f'{endianness}{float_format}', b)[0]
+
+    timestr = time.strftime("%Y-%m-%d,%H:%M:%S", time.gmtime(unixtime))
+
+    print(f"{timestr},{temp},{hum}", file=txtfile)
+
+conversion_table = {
+  1 : v1_conversion
+}
+
+if __name__ == "__main__":
+  cli_args = get_cli_args()
+
+  with open(cli_args.binary_logfile, 'rb') as binfile, open(cli_args.output_filepath, 'w') as txtfile:
+    header = ''
+    while True:
+      b = binfile.read(1)
+      if b == b'\x00' or b == b'': break
+      header += b.decode()
+    if header.startswith(TEXT_LOG_PREAMBLE):
+      print(f"{cli_args.binary_logifle} is a text log, and not a binary log. Exiting.")
+      sys.exit(-1)
+    elif header.startswith(BINARY_LOG_PREAMBLE):
+      version = int(header[len(BINARY_LOG_PREAMBLE):])
+      conversion_table[version](binfile, txtfile)
+    else:
+      print("Invalid or unknown log preamble. Exiting.")
+      sys.exit(-1)
