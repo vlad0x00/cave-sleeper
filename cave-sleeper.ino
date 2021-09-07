@@ -87,10 +87,7 @@ inline void msg_println(T t) {
 }
 
 inline void go_sleep() {
-#ifdef PRINT_DEBUG
   msg_println(F("Sleeping..."));
-  Serial.flush();
-#endif
   sleep_mode();
 }
 
