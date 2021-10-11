@@ -41,9 +41,9 @@ const char BINARY_LOG_PREAMBLE[] = "BinaryLog_v1\n";
 constexpr long SERIAL_BAUD_RATE = 9600;
 const char LOG_FILENAME[] = "log";
 constexpr int RTC_INTERRUPT_PIN = 2;
-constexpr int SD_CS = 10; // SD chip select
+constexpr int SD_CS = 4; // SD chip select
 
-constexpr int SLEEP_DURATION = 5; //15 * 60; // In seconds
+constexpr int SLEEP_DURATION = 15 * 60; // In seconds
 
 // ====================== END OF CONFIGURATION SECTION ======================
 
@@ -67,14 +67,13 @@ constexpr byte ALARM_BITS = ALRM1_SET;
 
 DS3231 clock;
 RTClib rtclib;
-char time_str[] = "0000-00-00,00:00:00";
-
 File logfile;
 
 template<typename T>
 inline void msg_print(T t) {
 #ifdef PRINT_DEBUG
   Serial.print(t);
+  Serial.flush();
 #endif
 }
 
@@ -91,19 +90,17 @@ inline void go_sleep() {
   sleep_mode();
 }
 
-inline void format_time(DateTime dt) {
+inline char* format_time(DateTime dt) {
+  static char time_str[] = "0000-00-00,00:00:00";
   sprintf(time_str, "%04d-%02d-%02d,%02d:%02d:%02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+  return time_str;
 }
 
 inline void init_rtc_time() {
   delay(5000);
   msg_println(F("Beginning RTC time initialization..."));
-#ifdef PRINT_DEBUG
-  Serial.flush();
-#endif
   
-  DateTime dt_local(__DATE__, __TIME__);
-  const uint32_t unixtime = dt_local.unixtime() - COMPILATION_TIMEZONE * 60 * 60;
+  const uint32_t unixtime = DateTime(__DATE__, __TIME__).unixtime() - COMPILATION_TIMEZONE * 60 * 60;
   DateTime dt_utc(unixtime);
   
   clock.setClockMode(false);
@@ -114,10 +111,8 @@ inline void init_rtc_time() {
   clock.setMinute(dt_utc.minute());
   clock.setSecond(dt_utc.second());
 
-  format_time(rtclib.now());
-
   msg_print(F("RTC time initialized to: "));
-  msg_println(time_str);
+  msg_println(format_time(rtclib.now()));
 }
 
 inline bool init_sd() {
@@ -216,26 +211,27 @@ void on_wakeup() {
   msg_println(F("Woken up."));
 }
 
-inline void set_alarm_time() {
-  const DateTime now = rtclib.now();
+inline DateTime get_current_time() {
+  const auto now = rtclib.now();
+  msg_print(F("Current time: "));
+  msg_println(format_time(now));
+  return now;
+}
+
+inline void set_alarm_time(const DateTime& now) {
   const DateTime dt_alarm(now.unixtime() + SLEEP_DURATION);
   clock.checkIfAlarm(1); // Reset the alarm bit
   clock.setA1Time(dt_alarm.day(), dt_alarm.hour(), dt_alarm.minute(), dt_alarm.second(), ALARM_BITS, false, false, false);
-#ifdef PRINT_DEBUG
-  format_time(now);
-  msg_print(F("Current time: "));
-  msg_println(time_str);
-  format_time(dt_alarm);
   msg_print(F("Alarm set for: "));
-  msg_println(time_str);
-#endif
+  msg_println(format_time(dt_alarm));
 }
 
 inline bool init_rtc() {
   pinMode(RTC_INTERRUPT_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_wakeup, FALLING);
 
-  set_alarm_time();
+  const DateTime dt_alarm(rtclib.now().unixtime() + 10000); // Set an alarm that won't expire before being changed
+  clock.setA1Time(dt_alarm.day(), dt_alarm.hour(), dt_alarm.minute(), dt_alarm.second(), ALARM_BITS, false, false, false);
 
   clock.checkIfAlarm(1); // Reset the alarm bit
   clock.turnOnAlarm(1);
@@ -261,9 +257,7 @@ inline bool init_rtc() {
 //  return true;
 //}
 
-inline void measure() {
-  const DateTime now = rtclib.now();
-
+inline void measure(const DateTime& now) {
   // Replace the following lines with actual sensor readouts
   const float temp = 30.0;
   const float hum = 0.5;
@@ -275,15 +269,14 @@ inline void measure() {
   msg_println(hum);
 
 #ifdef TEXT_LOG_FORMAT
-  format_time(now);
-  logfile.print(time_str);
+  logfile.print(format_time(now));
   logfile.print(',');
   logfile.print(temp);
   logfile.print(',');
   logfile.print(hum);
   logfile.print('\n');
 #else
-  uint32_t unixtime = now.unixtime();
+  const auto unixtime = now.unixtime();
   logfile.write((byte*)(&unixtime), sizeof(unixtime));
   logfile.write((byte*)(&temp), sizeof(temp));
   logfile.write((byte*)(&hum), sizeof(hum));
@@ -303,9 +296,10 @@ inline void normal_setup() {
 }
 
 inline void normal_loop() {
-  measure();
+  const auto now = get_current_time();
+  measure(now);
+  set_alarm_time(now);
   go_sleep();
-  set_alarm_time();
 }
 
 void setup() {    
