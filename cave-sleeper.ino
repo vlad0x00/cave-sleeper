@@ -319,7 +319,7 @@ void setup() {
 }
 
 void loop() {
-#ifndef INIT_RTC_TIME
+#if !defined(INIT_RTC_TIME) || defined(INIT_RTC_TIME_AND_RUN)
   normal_loop();
 #endif
 }
