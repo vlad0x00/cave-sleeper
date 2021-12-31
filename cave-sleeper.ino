@@ -167,20 +167,18 @@ inline bool init_log() {
       char c = logfile.read();
       preamble[i++] = c;
       if (c == '\0') {
-        logfile.close();
         break;
       }
     }
+    logfile.close();
     if (strcmp(EXPECTED_PREAMBLE, preamble)) {
       msg_println(F("Loaded preamble is different from expected."));
       msg_print(F("Expected: "));
       msg_println(EXPECTED_PREAMBLE);
       msg_print(F("Found: "));
       msg_println(preamble);
-      logfile.close();
       return false;
     }
-    logfile.close();
   }
 #endif
 
