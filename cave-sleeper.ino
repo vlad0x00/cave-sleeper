@@ -4,6 +4,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <string.h>
+#include <SparkFun_TMP117.h>
 
 // ====================== CONFIGURATION SECTION ======================
 
@@ -36,7 +37,7 @@ constexpr int COMPILATION_TIMEZONE = -7;
 
 // Preamble is used to indicate the format of the log
 const char TEXT_LOG_PREAMBLE[] = "TextLog_v1\n";
-const char TEXT_LOG_HEADER[] = "utc_date,utc_time,temperature,humidity\n";
+const char TEXT_LOG_HEADER[] = "utc_date,utc_time,temperature\n";
 const char BINARY_LOG_PREAMBLE[] = "BinaryLog_v1\n";
 constexpr long SERIAL_BAUD_RATE = 9600;
 const char LOG_FILENAME[] = "log";
@@ -49,7 +50,7 @@ constexpr int SLEEP_DURATION = 15 * 60; // In seconds
 
 constexpr uint32_t ENDIANNESS_SIGNATURE = (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) | (uint32_t(110));
 constexpr uint32_t INT_SIZE = sizeof(int);
-constexpr uint32_t FLOAT_SIZE = sizeof(float);
+constexpr uint32_t DOUBLE_SIZE = sizeof(double);
 
 constexpr byte ALRM1_MATCH_EVERY_SEC     = 0x0F;  // Once a second
 constexpr byte ALRM1_MATCH_SEC           = 0x0E;  // When seconds match
@@ -65,8 +66,9 @@ constexpr byte ALRM1_SET = ALRM1_MATCH_DT_HR_MIN_SEC;
 constexpr byte ALRM2_SET = ALRM2_MATCH_MIN;
 constexpr byte ALARM_BITS = ALRM1_SET;
 
-DS3231 clock;
+DS3231 rtcclock;
 RTClib rtclib;
+TMP117 tempsensor;
 File logfile;
 
 template<typename T>
@@ -103,13 +105,13 @@ inline void init_rtc_time() {
   const uint32_t unixtime = DateTime(__DATE__, __TIME__).unixtime() - COMPILATION_TIMEZONE * 60 * 60;
   DateTime dt_utc(unixtime);
   
-  clock.setClockMode(false);
-  clock.setYear(dt_utc.year() - 2000);
-  clock.setMonth(dt_utc.month());
-  clock.setDate(dt_utc.day());
-  clock.setHour(dt_utc.hour());
-  clock.setMinute(dt_utc.minute());
-  clock.setSecond(dt_utc.second());
+  rtcclock.setClockMode(false);
+  rtcclock.setYear(dt_utc.year() - 2000);
+  rtcclock.setMonth(dt_utc.month());
+  rtcclock.setDate(dt_utc.day());
+  rtcclock.setHour(dt_utc.hour());
+  rtcclock.setMinute(dt_utc.minute());
+  rtcclock.setSecond(dt_utc.second());
 
   msg_print(F("RTC time initialized to: "));
   msg_println(format_time(rtclib.now()));
@@ -193,7 +195,7 @@ inline bool init_log() {
       logfile.write(BINARY_LOG_PREAMBLE, sizeof(BINARY_LOG_PREAMBLE));
       logfile.write((byte*)(&ENDIANNESS_SIGNATURE), sizeof(ENDIANNESS_SIGNATURE));
       logfile.write((byte*)(&INT_SIZE), sizeof(INT_SIZE));
-      logfile.write((byte*)(&FLOAT_SIZE), sizeof(FLOAT_SIZE));
+      logfile.write((byte*)(&DOUBLE_SIZE), sizeof(DOUBLE_SIZE));
 #endif
       logfile.flush();
       
@@ -220,8 +222,8 @@ inline DateTime get_current_time() {
 
 inline void set_alarm_time(const DateTime& now) {
   const DateTime dt_alarm(now.unixtime() + SLEEP_DURATION);
-  clock.checkIfAlarm(1); // Reset the alarm bit
-  clock.setA1Time(dt_alarm.day(), dt_alarm.hour(), dt_alarm.minute(), dt_alarm.second(), ALARM_BITS, false, false, false);
+  rtcclock.checkIfAlarm(1); // Reset the alarm bit
+  rtcclock.setA1Time(dt_alarm.day(), dt_alarm.hour(), dt_alarm.minute(), dt_alarm.second(), ALARM_BITS, false, false, false);
   msg_print(F("Alarm set for: "));
   msg_println(format_time(dt_alarm));
 }
@@ -231,15 +233,24 @@ inline bool init_rtc() {
   attachInterrupt(digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_wakeup, FALLING);
 
   const DateTime dt_alarm(rtclib.now().unixtime() + 10000); // Set an alarm that won't expire before being changed
-  clock.setA1Time(dt_alarm.day(), dt_alarm.hour(), dt_alarm.minute(), dt_alarm.second(), ALARM_BITS, false, false, false);
+  rtcclock.setA1Time(dt_alarm.day(), dt_alarm.hour(), dt_alarm.minute(), dt_alarm.second(), ALARM_BITS, false, false, false);
 
-  clock.checkIfAlarm(1); // Reset the alarm bit
-  clock.turnOnAlarm(1);
-  if (clock.checkAlarmEnabled(1)) {
+  rtcclock.checkIfAlarm(1); // Reset the alarm bit
+  rtcclock.turnOnAlarm(1);
+  if (rtcclock.checkAlarmEnabled(1)) {
     msg_println(F("RTC alarm enabled."));
     return true;
   }
   msg_println(F("Failed to enable RTC alarm."));
+  return false;
+}
+
+inline bool init_sensors() {
+  if (tempsensor.begin()) {
+    msg_println(F("Temperature sensor initialized."));
+    return true;
+  }
+  msg_println(F("Failed to initialize temperature sensor."));
   return false;
 }
 
@@ -259,27 +270,28 @@ inline bool init_rtc() {
 
 inline void measure(const DateTime& now) {
   // Replace the following lines with actual sensor readouts
-  const float temp = 30.0;
-  const float hum = 0.5;
+  const double temp = tempsensor.readTempC();
+  //const double hum = 0.5;
 
   msg_println(F("Measurements taken."));
   msg_print(F("Temperature = "));
-  msg_println(temp);
-  msg_print(F("Humidity = "));
-  msg_println(hum);
+  msg_print(temp);
+  msg_println("C");
+  //msg_print(F("Humidity = "));
+  //msg_println(hum);
 
 #ifdef TEXT_LOG_FORMAT
   logfile.print(format_time(now));
   logfile.print(',');
   logfile.print(temp);
-  logfile.print(',');
-  logfile.print(hum);
+  //logfile.print(',');
+  //logfile.print(hum);
   logfile.print('\n');
 #else
   const auto unixtime = now.unixtime();
   logfile.write((byte*)(&unixtime), sizeof(unixtime));
   logfile.write((byte*)(&temp), sizeof(temp));
-  logfile.write((byte*)(&hum), sizeof(hum));
+  //logfile.write((byte*)(&hum), sizeof(hum));
 #endif
 
   logfile.flush();
@@ -288,7 +300,7 @@ inline void measure(const DateTime& now) {
 }
 
 inline void normal_setup() {
-  if (!(init_sd() && init_log() && init_rtc())) {
+  if (!(init_sd() && init_log() && init_rtc() && init_sensors())) {
     msg_println(F("Initialization failed."));
     go_sleep();
   }
