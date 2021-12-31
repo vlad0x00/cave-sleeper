@@ -47,6 +47,9 @@ constexpr int SD_CS = 4; // SD chip select
 
 constexpr int SLEEP_DURATION = 15 * 60; // In seconds
 
+// How long to wait after booting before running any code. Useful in order to avoid code execution on boot in case you instead want to upload different code.
+constexpr unsigned STARTUP_DELAY = 5000;
+
 // ====================== END OF CONFIGURATION SECTION ======================
 
 constexpr uint32_t ENDIANNESS_SIGNATURE = (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) | (uint32_t(110));
@@ -100,7 +103,6 @@ inline char* format_time(DateTime dt) {
 }
 
 inline void init_rtc_time() {
-  delay(5000);
   msg_println(F("Beginning RTC time initialization..."));
   
   const uint32_t unixtime = DateTime(__DATE__, __TIME__).unixtime() - COMPILATION_TIMEZONE * 60 * 60;
@@ -318,7 +320,9 @@ inline void normal_loop() {
   go_sleep();
 }
 
-void setup() {    
+void setup() {
+  delay(STARTUP_DELAY);
+
   Serial.begin(SERIAL_BAUD_RATE);
   Wire.begin();
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
