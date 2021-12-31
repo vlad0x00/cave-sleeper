@@ -6,7 +6,7 @@ import struct
 import time
 
 TEXT_LOG_PREAMBLE = 'TextLog_v'
-TEXT_LOG_HEADER = 'utc_date,utc_time,temperature,humidity'
+TEXT_LOG_HEADER = 'utc_date,utc_time,temperature'
 BINARY_LOG_PREAMBLE = 'BinaryLog_v'
 ENDIANNESS_SIGNATURE = (78 << 24) | (185 << 16) | (219 << 8) | (110)
 
@@ -60,15 +60,15 @@ def v1_conversion(binfile, txtfile):
       print("Log data corrupted.")
       sys.exit(-1)
     temp = struct.unpack(f'{endianness}{float_format}', b)[0]
-    b = binfile.read(4)
-    if len(b) < 4:
-      print("Log data corrupted.")
-      sys.exit(-1)
-    hum = struct.unpack(f'{endianness}{float_format}', b)[0]
+    #b = binfile.read(4)
+    #if len(b) < 4:
+    #  print("Log data corrupted.")
+    #  sys.exit(-1)
+    #hum = struct.unpack(f'{endianness}{float_format}', b)[0]
 
     timestr = time.strftime("%Y-%m-%d,%H:%M:%S", time.gmtime(unixtime))
 
-    print(f"{timestr},{temp},{hum}", file=txtfile)
+    print(f"{timestr},{temp}", file=txtfile)
 
 conversion_table = {
   1 : v1_conversion
