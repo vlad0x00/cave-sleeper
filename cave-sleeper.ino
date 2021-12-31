@@ -39,6 +39,7 @@ constexpr int COMPILATION_TIMEZONE = -7;
 const char TEXT_LOG_PREAMBLE[] = "TextLog_v1\n";
 const char TEXT_LOG_HEADER[] = "utc_date,utc_time,temperature\n";
 const char BINARY_LOG_PREAMBLE[] = "BinaryLog_v1\n";
+const char PREAMBLE_END_TOKEN = '\n';
 constexpr long SERIAL_BAUD_RATE = 9600;
 const char LOG_FILENAME[] = "log";
 constexpr int RTC_INTERRUPT_PIN = 2;
@@ -150,26 +151,27 @@ inline bool init_log() {
 
     // Load the preamble of the previous log
 #ifdef TEXT_LOG_FORMAT
-    const size_t PREAMBLE_BUFFER_SIZE = sizeof(TEXT_LOG_PREAMBLE);
+    constexpr size_t PREAMBLE_BUFFER_SIZE = sizeof(TEXT_LOG_PREAMBLE);
     const char* EXPECTED_PREAMBLE = TEXT_LOG_PREAMBLE;
 #else
-    const size_t PREAMBLE_BUFFER_SIZE = sizeof(BINARY_LOG_PREAMBLE);
+    constexpr size_t PREAMBLE_BUFFER_SIZE = sizeof(BINARY_LOG_PREAMBLE);
     const char* EXPECTED_PREAMBLE = BINARY_LOG_PREAMBLE;
 #endif
     char preamble[PREAMBLE_BUFFER_SIZE];
     size_t i = 0;
     while (logfile.available()) {
-      if (i == PREAMBLE_BUFFER_SIZE) {
+      if (i == PREAMBLE_BUFFER_SIZE - 1) {
         msg_println(F("Preamble too long in previous log."));
         logfile.close();
         return false;
       }
-      char c = logfile.read();
+      const char c = logfile.read();
       preamble[i++] = c;
-      if (c == '\0') {
+      if (c == PREAMBLE_END_TOKEN) {
         break;
       }
     }
+    preamble[i++] = '\0';
     logfile.close();
     if (strcmp(EXPECTED_PREAMBLE, preamble)) {
       msg_println(F("Loaded preamble is different from expected."));
@@ -194,7 +196,7 @@ inline bool init_log() {
       logfile.print(TEXT_LOG_PREAMBLE);
       logfile.print(TEXT_LOG_HEADER);
 #else
-      logfile.write(BINARY_LOG_PREAMBLE, sizeof(BINARY_LOG_PREAMBLE));
+      logfile.write(BINARY_LOG_PREAMBLE, sizeof(BINARY_LOG_PREAMBLE) - 1);
       logfile.write((byte*)(&ENDIANNESS_SIGNATURE), sizeof(ENDIANNESS_SIGNATURE));
       logfile.write((byte*)(&INT_SIZE), sizeof(INT_SIZE));
       logfile.write((byte*)(&DOUBLE_SIZE), sizeof(DOUBLE_SIZE));

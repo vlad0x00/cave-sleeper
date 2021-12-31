@@ -8,6 +8,7 @@ import time
 TEXT_LOG_PREAMBLE = 'TextLog_v'
 TEXT_LOG_HEADER = 'utc_date,utc_time,temperature'
 BINARY_LOG_PREAMBLE = 'BinaryLog_v'
+PREAMBLE_END_TOKEN = b'\n'
 ENDIANNESS_SIGNATURE = (78 << 24) | (185 << 16) | (219 << 8) | (110)
 
 def get_cli_args():
@@ -83,6 +84,7 @@ if __name__ == "__main__":
       b = binfile.read(1)
       if b == b'\x00' or b == b'': break
       header += b.decode()
+      if b == PREAMBLE_END_TOKEN: break
     if header.startswith(TEXT_LOG_PREAMBLE):
       print(f"{cli_args.binary_logifle} is a text log, and not a binary log. Exiting.")
       sys.exit(-1)
