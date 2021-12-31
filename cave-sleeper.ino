@@ -141,43 +141,47 @@ inline bool init_log() {
   }
 
 #ifdef RESUME_PREVIOUS_LOG
-    if (found_prev) {
-      logfile = SD.open(LOG_FILENAME, FILE_READ);
-      if (!logfile) {
-        msg_println(F("Failed to open previous log file."));
-        return false;
-      }
-      
-      // Load the preamble of the previous log
+  if (found_prev) {
+    logfile = SD.open(LOG_FILENAME, FILE_READ);
+    if (!logfile) {
+      msg_println(F("Failed to open previous log file."));
+      return false;
+    }
+
+    // Load the preamble of the previous log
 #ifdef TEXT_LOG_FORMAT
-      const size_t PREAMBLE_BUFFER_SIZE = sizeof(TEXT_LOG_PREAMBLE);
-      const char* EXPECTED_PREAMBLE = TEXT_LOG_PREAMBLE;
+    const size_t PREAMBLE_BUFFER_SIZE = sizeof(TEXT_LOG_PREAMBLE);
+    const char* EXPECTED_PREAMBLE = TEXT_LOG_PREAMBLE;
 #else
-      const size_t PREAMBLE_BUFFER_SIZE = sizeof(BINARY_LOG_PREAMBLE);
-      const char* EXPECTED_PREAMBLE = BINARY_LOG_PREAMBLE;
+    const size_t PREAMBLE_BUFFER_SIZE = sizeof(BINARY_LOG_PREAMBLE);
+    const char* EXPECTED_PREAMBLE = BINARY_LOG_PREAMBLE;
 #endif
-      char preamble[PREAMBLE_BUFFER_SIZE];
-      size_t i = 0;
-      while (logfile.available()) {
-        if (i == PREAMBLE_BUFFER_SIZE) {
-          msg_println(F("Preamble too long in previous log."));
-          return false;
-        }
-        char c = logfile.read();
-        preamble[i++] = c;
-        if (c == '\0') {
-          break;
-        }
-      }
-      if (strcmp(EXPECTED_PREAMBLE, preamble)) {
-        msg_println(F("Loaded preamble is different from expected."));
-        msg_print(F("Expected: "));
-        msg_println(EXPECTED_PREAMBLE);
-        msg_print(F("Found: "));
-        msg_println(preamble);
+    char preamble[PREAMBLE_BUFFER_SIZE];
+    size_t i = 0;
+    while (logfile.available()) {
+      if (i == PREAMBLE_BUFFER_SIZE) {
+        msg_println(F("Preamble too long in previous log."));
+        logfile.close();
         return false;
+      }
+      char c = logfile.read();
+      preamble[i++] = c;
+      if (c == '\0') {
+        logfile.close();
+        break;
       }
     }
+    if (strcmp(EXPECTED_PREAMBLE, preamble)) {
+      msg_println(F("Loaded preamble is different from expected."));
+      msg_print(F("Expected: "));
+      msg_println(EXPECTED_PREAMBLE);
+      msg_print(F("Found: "));
+      msg_println(preamble);
+      logfile.close();
+      return false;
+    }
+    logfile.close();
+  }
 #endif
 
   logfile = SD.open(LOG_FILENAME, FILE_WRITE);
