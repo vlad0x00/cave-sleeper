@@ -8,29 +8,28 @@
 
 // ====================== CONFIGURATION SECTION ======================
 
-// Uncomment to enable RTC time initialization only. Compile code with
-// this uncommented, upload it to the microncontroller to initialize
-// the RTC and then recompile with this line commented out to upload
-// the regular functionality code.
-// #define INIT_RTC_TIME
+// Set to true to enable RTC time initialization only. Compile code with
+// this enabled, upload it to the microncontroller to initialize
+// the RTC and then recompile with this disabled to upload the regular
+// functionality code.
+constexpr inline bool INIT_RTC_TIME = false;
 
-// Uncomment to both initialize RTC time and run the regular functionality
-// immediately after. Useful for debugging. Implies the definition of
-// INIT_RTC_TIME
-// #define INIT_RTC_TIME_AND_RUN
+// Set to true to both initialize RTC time and run the regular functionality
+// immediately after. Useful for debugging. Implies INIT_RTC_TIME.
+constexpr inline bool INIT_RTC_TIME_AND_RUN = false;
 
 // Offset from UTC for the computer this code is compiled on.
 // This is needed in order to determine the current UTC time
 // to upload it to the RTC.
-constexpr int COMPILATION_TIMEZONE = -7;
+constexpr inline int COMPILATION_TIMEZONE = -7;
 
-// Uncomment to enable readable, but unoptimized, log format
-// #define TEXT_LOG_FORMAT
+// Set to true to enable readable, but unoptimized, log format
+constexpr inline bool TEXT_LOG_FORMAT = false;
 
-// Uncomment to resume the previous log found on the SD card, if any.
-// If there isn't one, a new file is created. If commented out,
+// Set to true to resume the previous log found on the SD card, if any.
+// If there isn't one, a new file is created. If disabled,
 // the previous log deleted, if present, and a new one is started.
-// #define RESUME_PREVIOUS_LOG
+constexpr inline bool RESUME_PREVIOUS_LOG = false;
 
 // Change to true to print debug messages to serial port.
 constexpr inline bool PRINT_DEBUG = true;
@@ -163,81 +162,75 @@ init_log()
   bool found_prev = false;
   if (SD.exists(LOG_FILENAME)) {
     found_prev = true;
-#ifdef RESUME_PREVIOUS_LOG
-    msg_println(F("Previous log found, appending."));
-#else
-    msg_println(F("Previous log found, removing."));
-    SD.remove("log");
-#endif
+    if constexpr (RESUME_PREVIOUS_LOG) {
+      msg_println(F("Previous log found, appending."));
+    } else {
+      msg_println(F("Previous log found, removing."));
+      SD.remove("log");
+    }
   } else {
     msg_println(F("No previous log found, creating a new one."));
   }
 
-#ifdef RESUME_PREVIOUS_LOG
-  if (found_prev) {
-    logfile = SD.open(LOG_FILENAME, FILE_READ);
-    if (!logfile) {
-      msg_println(F("Failed to open previous log file."));
-      return false;
-    }
-
-    // Load the preamble of the previous log
-#ifdef TEXT_LOG_FORMAT
-    constexpr size_t PREAMBLE_BUFFER_SIZE = sizeof(TEXT_LOG_PREAMBLE);
-    const char* EXPECTED_PREAMBLE = TEXT_LOG_PREAMBLE;
-#else
-    constexpr size_t PREAMBLE_BUFFER_SIZE = sizeof(BINARY_LOG_PREAMBLE);
-    const char* EXPECTED_PREAMBLE = BINARY_LOG_PREAMBLE;
-#endif
-    char preamble[PREAMBLE_BUFFER_SIZE];
-    size_t i = 0;
-    while (logfile.available()) {
-      if (i == PREAMBLE_BUFFER_SIZE - 1) {
-        msg_println(F("Preamble too long in previous log."));
-        logfile.close();
+  if constexpr (RESUME_PREVIOUS_LOG) {
+    if (found_prev) {
+      logfile = SD.open(LOG_FILENAME, FILE_READ);
+      if (!logfile) {
+        msg_println(F("Failed to open previous log file."));
         return false;
       }
-      const char c = logfile.read();
-      preamble[i++] = c;
-      if (c == PREAMBLE_END_TOKEN) {
-        break;
+
+      // Load the preamble of the previous log
+      constexpr size_t PREAMBLE_BUFFER_SIZE = TEXT_LOG_FORMAT
+                                                ? sizeof(TEXT_LOG_PREAMBLE)
+                                                : sizeof(BINARY_LOG_PREAMBLE);
+      const char* EXPECTED_PREAMBLE =
+        TEXT_LOG_FORMAT ? TEXT_LOG_PREAMBLE : BINARY_LOG_PREAMBLE;
+
+      char preamble[PREAMBLE_BUFFER_SIZE];
+      size_t i = 0;
+      while (logfile.available()) {
+        if (i == PREAMBLE_BUFFER_SIZE - 1) {
+          msg_println(F("Preamble too long in previous log."));
+          logfile.close();
+          return false;
+        }
+        const char c = logfile.read();
+        preamble[i++] = c;
+        if (c == PREAMBLE_END_TOKEN) {
+          break;
+        }
+      }
+      preamble[i++] = '\0';
+      logfile.close();
+      if (strcmp(EXPECTED_PREAMBLE, preamble)) {
+        msg_println(F("Loaded preamble is different from expected."));
+        msg_print(F("Expected: "));
+        msg_println(EXPECTED_PREAMBLE);
+        msg_print(F("Found: "));
+        msg_println(preamble);
+        return false;
       }
     }
-    preamble[i++] = '\0';
-    logfile.close();
-    if (strcmp(EXPECTED_PREAMBLE, preamble)) {
-      msg_println(F("Loaded preamble is different from expected."));
-      msg_print(F("Expected: "));
-      msg_println(EXPECTED_PREAMBLE);
-      msg_print(F("Found: "));
-      msg_println(preamble);
-      return false;
-    }
   }
-#endif
 
   logfile = SD.open(LOG_FILENAME, FILE_WRITE);
   if (logfile) {
     msg_println(F("Log file opened for writing."));
 
-#ifdef RESUME_PREVIOUS_LOG
-    if (!found_prev) {
-#endif
-
-#ifdef TEXT_LOG_FORMAT
-      logfile.print(TEXT_LOG_PREAMBLE);
-      logfile.print(TEXT_LOG_HEADER);
-#else
-    logfile.write(BINARY_LOG_PREAMBLE, sizeof(BINARY_LOG_PREAMBLE) - 1);
-    logfile.write((byte*)(&ENDIANNESS_SIGNATURE), sizeof(ENDIANNESS_SIGNATURE));
-    logfile.write((byte*)(&INT_SIZE), sizeof(INT_SIZE));
-    logfile.write((byte*)(&DOUBLE_SIZE), sizeof(DOUBLE_SIZE));
-#endif
+    if (!RESUME_PREVIOUS_LOG || !found_prev) {
+      if constexpr (TEXT_LOG_FORMAT) {
+        logfile.print(TEXT_LOG_PREAMBLE);
+        logfile.print(TEXT_LOG_HEADER);
+      } else {
+        logfile.write(BINARY_LOG_PREAMBLE, sizeof(BINARY_LOG_PREAMBLE) - 1);
+        logfile.write((byte*)(&ENDIANNESS_SIGNATURE),
+                      sizeof(ENDIANNESS_SIGNATURE));
+        logfile.write((byte*)(&INT_SIZE), sizeof(INT_SIZE));
+        logfile.write((byte*)(&DOUBLE_SIZE), sizeof(DOUBLE_SIZE));
+      }
       logfile.flush();
-
-#ifdef RESUME_PREVIOUS_LOG
     }
-#endif
 
     return true;
   }
@@ -345,19 +338,19 @@ measure(const DateTime& now)
   // msg_print(F("Humidity = "));
   // msg_println(hum);
 
-#ifdef TEXT_LOG_FORMAT
-  logfile.print(format_time(now));
-  logfile.print(',');
-  logfile.print(temp);
-  // logfile.print(',');
-  // logfile.print(hum);
-  logfile.print('\n');
-#else
-  const auto unixtime = now.unixtime();
-  logfile.write((byte*)(&unixtime), sizeof(unixtime));
-  logfile.write((byte*)(&temp), sizeof(temp));
-  // logfile.write((byte*)(&hum), sizeof(hum));
-#endif
+  if constexpr (TEXT_LOG_FORMAT) {
+    logfile.print(format_time(now));
+    logfile.print(',');
+    logfile.print(temp);
+    // logfile.print(',');
+    // logfile.print(hum);
+    logfile.print('\n');
+  } else {
+    const auto unixtime = now.unixtime();
+    logfile.write((byte*)(&unixtime), sizeof(unixtime));
+    logfile.write((byte*)(&temp), sizeof(temp));
+    // logfile.write((byte*)(&hum), sizeof(hum));
+  }
 
   logfile.flush();
 
@@ -392,21 +385,21 @@ setup()
   Wire.begin();
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 
-#if defined(INIT_RTC_TIME) || defined(INIT_RTC_TIME_AND_RUN)
-  init_rtc_time();
-#endif
+  if constexpr (INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
+    init_rtc_time();
+  }
 
-#if !defined(INIT_RTC_TIME) || defined(INIT_RTC_TIME_AND_RUN)
-  normal_setup();
-#else
-  go_sleep();
-#endif
+  if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
+    normal_setup();
+  } else {
+    go_sleep();
+  }
 }
 
 void
 loop()
 {
-#if !defined(INIT_RTC_TIME) || defined(INIT_RTC_TIME_AND_RUN)
-  normal_loop();
-#endif
+  if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
+    normal_loop();
+  }
 }
