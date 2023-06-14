@@ -1,57 +1,16 @@
-#include <DS3231.h>
-#include <SD.h>
+#include "bluetooth.hpp"
+#include "rtc.hpp"
+#include "sensors.hpp"
+#include "log.hpp"
+#include "config.hpp"
+#include "utils.hpp"
+
 #include <SPI.h>
-#include <SparkFun_TMP117.h>
 #include <Wire.h>
 #include <avr/sleep.h>
 #include <string.h>
 
-// ====================== CONFIGURATION SECTION ======================
-
-// Set to true to enable RTC time initialization only. Compile code with
-// this enabled, upload it to the microncontroller to initialize
-// the RTC and then recompile with this disabled to upload the regular
-// functionality code.
-constexpr inline bool INIT_RTC_TIME = false;
-
-// Set to true to both initialize RTC time and run the regular functionality
-// immediately after. Useful for debugging. Implies INIT_RTC_TIME.
-constexpr inline bool INIT_RTC_TIME_AND_RUN = false;
-
-// Offset from UTC for the computer this code is compiled on.
-// This is needed in order to determine the current UTC time
-// to upload it to the RTC.
-constexpr inline int COMPILATION_TIMEZONE = -7;
-
-// Set to true to enable readable, but unoptimized, log format
-constexpr inline bool TEXT_LOG_FORMAT = false;
-
-// Set to true to resume the previous log found on the SD card, if any.
-// If there isn't one, a new file is created. If disabled,
-// the previous log deleted, if present, and a new one is started.
-constexpr inline bool RESUME_PREVIOUS_LOG = false;
-
-// Change to true to print debug messages to serial port.
-constexpr inline bool PRINT_DEBUG = true;
-
-// Preamble is used to indicate the format of the log
-const char TEXT_LOG_PREAMBLE[] = "TextLog_v1\n";
-const char TEXT_LOG_HEADER[] = "utc_date,utc_time,temperature\n";
-const char BINARY_LOG_PREAMBLE[] = "BinaryLog_v1\n";
-const char PREAMBLE_END_TOKEN = '\n';
-constexpr inline long SERIAL_BAUD_RATE = 9600;
-const char LOG_FILENAME[] = "log";
-constexpr inline int RTC_INTERRUPT_PIN = 2;
-constexpr inline int SD_CS = 4; // SD chip select
-
-constexpr inline int SLEEP_DURATION = 15 * 60; // In seconds
-
-// How long to wait after booting before running any code. Useful in order to
-// avoid code execution on boot in case you instead want to upload different
-// code.
-constexpr inline unsigned STARTUP_DELAY = 5000;
-
-// ====================== END OF CONFIGURATION SECTION ======================
+namespace cvslpr {
 
 constexpr inline uint32_t ENDIANNESS_SIGNATURE =
   (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) |
@@ -59,90 +18,11 @@ constexpr inline uint32_t ENDIANNESS_SIGNATURE =
 constexpr inline uint32_t INT_SIZE = sizeof(int);
 constexpr inline uint32_t DOUBLE_SIZE = sizeof(double);
 
-constexpr inline byte ALRM1_MATCH_EVERY_SEC = 0x0F; // Once a second
-constexpr inline byte ALRM1_MATCH_SEC = 0x0E;       // When seconds match
-constexpr inline byte ALRM1_MATCH_MIN_SEC =
-  0x0C; // When minutes and seconds match
-constexpr inline byte ALRM1_MATCH_HR_MIN_SEC =
-  0x08; // When hours, minutes, and seconds match
-constexpr inline byte ALRM1_MATCH_DT_HR_MIN_SEC =
-  0x00; // When date, hours, minutes, and seconds match
-
-constexpr inline byte ALRM2_ONCE_PER_MIN =
-  0x07; // Once per minute (00 seconds of every minute)
-constexpr inline byte ALRM2_MATCH_MIN = 0x06;    // When minutes match
-constexpr inline byte ALRM2_MATCH_HR_MIN = 0x04; // When hours and minutes match
-
-constexpr inline byte ALRM1_SET = ALRM1_MATCH_DT_HR_MIN_SEC;
-constexpr inline byte ALRM2_SET = ALRM2_MATCH_MIN;
-constexpr inline byte ALARM_BITS = ALRM1_SET;
-
-DS3231 rtcclock;
-RTClib rtclib;
-TMP117 tempsensor;
-File logfile;
-
-template<typename T>
-inline void
-msg_print(T t)
-{
-  if constexpr (PRINT_DEBUG) {
-    Serial.print(t);
-    Serial.flush();
-  }
-}
-
-template<typename T>
-inline void
-msg_println(T t)
-{
-  if constexpr (PRINT_DEBUG) {
-    Serial.println(t);
-    Serial.flush();
-  }
-}
-
 static inline void
 go_sleep()
 {
   msg_println(F("Sleeping..."));
   sleep_mode();
-}
-
-static inline char*
-format_time(DateTime dt)
-{
-  static char time_str[] = "0000-00-00,00:00:00";
-  sprintf(time_str,
-          "%04d-%02d-%02d,%02d:%02d:%02d",
-          dt.year(),
-          dt.month(),
-          dt.day(),
-          dt.hour(),
-          dt.minute(),
-          dt.second());
-  return time_str;
-}
-
-static inline void
-init_rtc_time()
-{
-  msg_println(F("Beginning RTC time initialization..."));
-
-  const uint32_t unixtime =
-    DateTime(__DATE__, __TIME__).unixtime() - COMPILATION_TIMEZONE * 60 * 60;
-  DateTime dt_utc(unixtime);
-
-  rtcclock.setClockMode(false);
-  rtcclock.setYear(dt_utc.year() - 2000);
-  rtcclock.setMonth(dt_utc.month());
-  rtcclock.setDate(dt_utc.day());
-  rtcclock.setHour(dt_utc.hour());
-  rtcclock.setMinute(dt_utc.minute());
-  rtcclock.setSecond(dt_utc.second());
-
-  msg_print(F("RTC time initialized to: "));
-  msg_println(format_time(rtclib.now()));
 }
 
 static inline bool
@@ -238,77 +118,6 @@ init_log()
   return false;
 }
 
-void
-on_wakeup()
-{
-  msg_println(F("Woken up."));
-}
-
-static inline DateTime
-get_current_time()
-{
-  const auto now = rtclib.now();
-  msg_print(F("Current time: "));
-  msg_println(format_time(now));
-  return now;
-}
-
-static inline void
-set_alarm_time(const DateTime& now)
-{
-  const DateTime dt_alarm(now.unixtime() + SLEEP_DURATION);
-  rtcclock.checkIfAlarm(1); // Reset the alarm bit
-  rtcclock.setA1Time(dt_alarm.day(),
-                     dt_alarm.hour(),
-                     dt_alarm.minute(),
-                     dt_alarm.second(),
-                     ALARM_BITS,
-                     false,
-                     false,
-                     false);
-  msg_print(F("Alarm set for: "));
-  msg_println(format_time(dt_alarm));
-}
-
-static inline bool
-init_rtc()
-{
-  pinMode(RTC_INTERRUPT_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_wakeup, FALLING);
-
-  const DateTime dt_alarm(
-    rtclib.now().unixtime() +
-    10000); // Set an alarm that won't expire before being changed
-  rtcclock.setA1Time(dt_alarm.day(),
-                     dt_alarm.hour(),
-                     dt_alarm.minute(),
-                     dt_alarm.second(),
-                     ALARM_BITS,
-                     false,
-                     false,
-                     false);
-
-  rtcclock.checkIfAlarm(1); // Reset the alarm bit
-  rtcclock.turnOnAlarm(1);
-  if (rtcclock.checkAlarmEnabled(1)) {
-    msg_println(F("RTC alarm enabled."));
-    return true;
-  }
-  msg_println(F("Failed to enable RTC alarm."));
-  return false;
-}
-
-static inline bool
-init_sensors()
-{
-  if (tempsensor.begin()) {
-    msg_println(F("Temperature sensor initialized."));
-    return true;
-  }
-  msg_println(F("Failed to initialize temperature sensor."));
-  return false;
-}
-
 // These are unnecessary, as at no point will the microcontroller be notified to
 // shut down
 
@@ -360,7 +169,7 @@ measure(const DateTime& now)
 static inline void
 normal_setup()
 {
-  if (!(init_sd() && init_log() && init_rtc() && init_sensors())) {
+  if (!(init_sd() && init_log() && init_rtc() && init_sensors() && init_bluetooth())) {
     msg_println(F("Initialization failed."));
     go_sleep();
   }
@@ -374,16 +183,19 @@ normal_loop()
   measure(now);
   set_alarm_time(now);
   go_sleep();
+  if (bluetooth_wakeup) {
+    bluetooth_transfer_data();
+    bluetooth_wakeup = false;
+  }
 }
 
-void
-setup()
-{
+void setup() {
   delay(STARTUP_DELAY);
 
   Serial.begin(SERIAL_BAUD_RATE);
   Wire.begin();
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
 
   if constexpr (INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
     init_rtc_time();
@@ -396,10 +208,22 @@ setup()
   }
 }
 
-void
-loop()
-{
+void loop() {
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
     normal_loop();
   }
+}
+
+} // namespace cvslpr
+
+void
+setup()
+{
+  cvslpr::setup();
+}
+
+void
+loop()
+{
+  cvslpr::loop();
 }
