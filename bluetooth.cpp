@@ -1,20 +1,15 @@
 #include "bluetooth.hpp"
-
-#include "config.hpp"
-#include "utils.hpp"
+#include "print.hpp"
 #include "log.hpp"
+
+#include <Arduino.h>
+#include <SoftwareSerial.h>
+#include <SD.h>
 
 namespace cvslpr {
 
-SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
+static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 bool bluetooth_wakeup = false;
-
-void
-on_bluetooth_wakeup()
-{
-  msg_println(F("Woken up by bluetooth."));
-  bluetooth_wakeup = true;
-}
 
 bool
 init_bluetooth() {
@@ -37,12 +32,21 @@ init_bluetooth() {
 }
 
 void
+on_bluetooth_wakeup()
+{
+  msg_println(F("Woken up by bluetooth."));
+  bluetooth_wakeup = true;
+}
+
+void
 bluetooth_transfer_data() {
+  auto logfile = SD.open(LOG_FILENAME, FILE_READ);
   for (;;) {
-    const auto b = 0; // Should open a new file and use logfile only for writing
+    const auto b = logfile.read();
     if (b < 0) { break; }
     bluetooth.write(b);
   }
+  logfile.close();
 }
 
 } // namespace cvslpr

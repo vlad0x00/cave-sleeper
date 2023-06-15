@@ -1,11 +1,18 @@
-#ifndef CAVE_SLEEPER_UTILS_HPP
-#define CAVE_SLEEPER_UTILS_HPP
-
-#include "config.hpp"
+#ifndef CAVE_SLEEPER_PRINT_HPP
+#define CAVE_SLEEPER_PRINT_HPP
 
 #include <Arduino.h>
 
 namespace cvslpr {
+
+// Change to true to print debug messages to serial port.
+constexpr inline bool PRINT_DEBUG = true;
+
+constexpr inline long SERIAL_BAUD_RATE = 9600;
+
+[[nodiscard]] inline bool init_print() {
+  Serial.begin(SERIAL_BAUD_RATE);
+}
 
 template<typename T>
 inline void
