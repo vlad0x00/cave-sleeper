@@ -12,6 +12,7 @@ constexpr inline long SERIAL_BAUD_RATE = 9600;
 
 [[nodiscard]] inline bool init_print() {
   Serial.begin(SERIAL_BAUD_RATE);
+  return true;
 }
 
 template<typename T>

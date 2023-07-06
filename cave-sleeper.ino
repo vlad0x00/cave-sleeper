@@ -12,11 +12,19 @@ namespace cvslpr {
 // code.
 constexpr inline unsigned STARTUP_DELAY = 5000;
 
+// Set to false if initialization or a component fails.
+// If false, the main loop executes nothing.
+static bool status_good = true;
+
 void setup() {
   delay(STARTUP_DELAY);
 
-  (void)init_print();
+  if (!init_print()) {
+    status_good = false;
+    return;
+  }
   if (!init_sleep()) {
+    status_good = false;
     msg_println(F("Initialization failed."));
     return;
   }
@@ -27,6 +35,7 @@ void setup() {
 
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
     if (!(init_log() && init_rtc() && init_sensors() && init_bluetooth())) {
+      status_good = false;
       msg_println(F("Initialization failed."));
       go_sleep();
     }
@@ -38,13 +47,15 @@ void setup() {
 
 void loop() {
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
-    const auto now = get_current_time();
-    measure(now);
-    set_alarm_time(now);
-    go_sleep();
-    if (bluetooth_wakeup) {
-      bluetooth_transfer_data();
-      bluetooth_wakeup = false;
+    if (status_good) {
+      const auto now = get_current_time();
+      measure(now);
+      set_alarm_time(now);
+      go_sleep();
+      if (bluetooth_wakeup) {
+        bluetooth_transfer_data();
+        bluetooth_wakeup = false;
+      }
     }
   }
 }

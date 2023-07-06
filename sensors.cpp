@@ -1,5 +1,4 @@
 #include "sensors.hpp"
-
 #include "print.hpp"
 
 #include <SparkFun_TMP117.h>
@@ -7,7 +6,7 @@
 
 namespace cvslpr {
 
-TMP117 tempsensor;
+static TMP117 tempsensor;
 
 bool
 init_sensors()
@@ -36,7 +35,7 @@ measure(const DateTime& now)
   // msg_print(F("Humidity = "));
   // msg_println(hum);
 
-
+  return {temp, 0.0};
 }
 
 } // namespace cvslpr

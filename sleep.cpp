@@ -8,6 +8,7 @@ namespace cvslpr {
 bool init_sleep() {
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
+  return true;
 }
 
 void go_sleep() {

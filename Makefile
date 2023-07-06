@@ -11,3 +11,6 @@ monitor:
 
 format:
 	clang-format -i --style=Mozilla *.ino *.hpp *.cpp
+
+lint:
+	clang-tidy *.ino *.hpp *.cpp -- -std=gnu++11
