@@ -1,10 +1,10 @@
 #include "bluetooth.hpp"
-#include "print.hpp"
 #include "log.hpp"
+#include "print.hpp"
 
 #include <Arduino.h>
-#include <SoftwareSerial.h>
 #include <SD.h>
+#include <SoftwareSerial.h>
 
 namespace cvslpr {
 
@@ -17,9 +17,12 @@ static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 bool bluetooth_wakeup = false;
 
 bool
-init_bluetooth() {
+init_bluetooth()
+{
   pinMode(BLUETOOTH_INTERRUPT_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(BLUETOOTH_INTERRUPT_PIN), on_bluetooth_wakeup, RISING);
+  attachInterrupt(digitalPinToInterrupt(BLUETOOTH_INTERRUPT_PIN),
+                  on_bluetooth_wakeup,
+                  RISING);
 
   bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE);
   bluetooth.write("AT");
@@ -44,11 +47,14 @@ on_bluetooth_wakeup()
 }
 
 void
-bluetooth_transfer_data() {
+bluetooth_transfer_data()
+{
   auto logfile = SD.open(LOG_FILENAME, FILE_READ);
   for (;;) {
     const auto b = logfile.read();
-    if (b < 0) { break; }
+    if (b < 0) {
+      break;
+    }
     bluetooth.write(b);
   }
   logfile.close();

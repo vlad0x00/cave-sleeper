@@ -4,8 +4,8 @@
 #include <SD.h>
 #include <SPI.h>
 
-#include <cstring>
 #include <cstddef>
+#include <cstring>
 
 namespace cvslpr {
 
@@ -49,7 +49,9 @@ init_sd()
 bool
 init_log()
 {
-  if (!init_sd()) { return false; }
+  if (!init_sd()) {
+    return false;
+  }
 
   bool found_prev = false;
   if (SD.exists(LOG_FILENAME)) {
@@ -130,13 +132,17 @@ init_log()
   return false;
 }
 
-bool deinit_log() {
+bool
+deinit_log()
+{
   logfile.close();
   msg_println(F("Log deinitialized."));
   return true;
 }
 
-void log(const SensorsReadout& readout, const DateTime& now) {
+void
+log(const SensorsReadout& readout, const DateTime& now)
+{
   if constexpr (TEXT_LOG_FORMAT) {
     logfile.print(format_time(now));
     logfile.print(',');

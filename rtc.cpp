@@ -117,7 +117,8 @@ bool
 init_rtc()
 {
   pinMode(RTC_INTERRUPT_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_rtc_wakeup, FALLING);
+  attachInterrupt(
+    digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_rtc_wakeup, FALLING);
 
   const DateTime dt_alarm(
     rtclib.now().unixtime() +

@@ -3,8 +3,10 @@
 
 namespace cvslpr {
 
-[[nodiscard]] bool init_sleep();
-void go_sleep();
+[[nodiscard]] bool
+init_sleep();
+void
+go_sleep();
 
 } // namespace cvslpr
 

@@ -1,8 +1,8 @@
 #include "bluetooth.hpp"
+#include "config.hpp"
+#include "log.hpp"
 #include "rtc.hpp"
 #include "sensors.hpp"
-#include "log.hpp"
-#include "config.hpp"
 #include "utils.hpp"
 
 namespace cvslpr {
@@ -16,7 +16,9 @@ constexpr inline unsigned STARTUP_DELAY = 5000;
 // If false, the main loop executes nothing.
 static bool status_good = true;
 
-void setup() {
+void
+setup()
+{
   delay(STARTUP_DELAY);
 
   if (!init_print()) {
@@ -45,7 +47,9 @@ void setup() {
   }
 }
 
-void loop() {
+void
+loop()
+{
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
     if (status_good) {
       const auto now = get_current_time();

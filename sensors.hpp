@@ -3,7 +3,8 @@
 
 namespace cvslpr {
 
-struct SensorsReadout {
+struct SensorsReadout
+{
   double temp = 0.0;
   double hum = 0.0;
 };

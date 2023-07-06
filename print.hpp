@@ -10,7 +10,9 @@ constexpr inline bool PRINT_DEBUG = true;
 
 constexpr inline long SERIAL_BAUD_RATE = 9600;
 
-[[nodiscard]] inline bool init_print() {
+[[nodiscard]] inline bool
+init_print()
+{
   Serial.begin(SERIAL_BAUD_RATE);
   return true;
 }
@@ -37,4 +39,4 @@ msg_println(T t)
 
 } // namespace cvslpr
 
-#endif 
+#endif
