@@ -5,16 +5,6 @@
 
 namespace cvslpr {
 
-// Set to true to enable RTC time initialization only. Compile code with
-// this enabled, upload it to the microncontroller to initialize
-// the RTC and then recompile with this disabled to upload the regular
-// functionality code.
-constexpr inline bool INIT_RTC_TIME = false;
-
-// Set to true to both initialize RTC time and run the regular functionality
-// immediately after. Useful for debugging. Implies INIT_RTC_TIME.
-constexpr inline bool INIT_RTC_TIME_AND_RUN = false;
-
 // Offset from UTC for the computer this code is compiled on.
 // This is needed in order to determine the current UTC time
 // to upload it to the RTC.

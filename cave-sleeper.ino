@@ -1,9 +1,9 @@
 #include "bluetooth.hpp"
-#include "config.hpp"
 #include "log.hpp"
+#include "print.hpp"
 #include "rtc.hpp"
 #include "sensors.hpp"
-#include "utils.hpp"
+#include "sleep.hpp"
 
 namespace cvslpr {
 
