@@ -9,7 +9,7 @@
 
 namespace cvslpr {
 
-constexpr inline int SD_CS = 6; // SD chip select
+constexpr inline int SD_CS = 4; // SD chip select
 
 // Set to true to enable readable, but unoptimized, log format
 constexpr inline bool TEXT_LOG_FORMAT = false;
@@ -139,14 +139,14 @@ log(const SensorsReadout& readout, const DateTime& now)
     logfile.print(format_time(now));
     logfile.print(',');
     logfile.print(readout.temp);
-    // logfile.print(',');
-    // logfile.print(readout.hum);
+    logfile.print(',');
+    logfile.print(readout.hum);
     logfile.print('\n');
   } else {
     const auto unixtime = now.unixtime();
     logfile.write((byte*)(&unixtime), sizeof(unixtime));
     logfile.write((byte*)(&readout.temp), sizeof(readout.temp));
-    // logfile.write((byte*)(&readout.hum), sizeof(readout.hum));
+    logfile.write((byte*)(&readout.hum), sizeof(readout.hum));
   }
 
   logfile.flush();
