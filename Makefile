@@ -1,15 +1,16 @@
 all: compile
 
-BOARD=nano
+BOARD=arduino:avr:nano
+PORT=/dev/ttyUSB0
 
 compile:
-	arduino-cli compile -b arduino:avr:$(BOARD)
+	arduino-cli compile -b $(BOARD)
 
 upload:
-	arduino-cli upload -b arduino:avr:$(BOARD) -p /dev/ttyACM0
+	arduino-cli upload -b $(BOARD) -p $(PORT)
 
 monitor:
-	arduino-cli monitor -b arduino:avr:$(BOARD) -p /dev/ttyACM0
+	arduino-cli monitor -b $(BOARD) -p $(PORT)
 
 format:
 	clang-format -i --style=Mozilla *.ino *.hpp *.cpp
