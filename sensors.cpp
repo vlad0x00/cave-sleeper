@@ -25,7 +25,7 @@ SensorsReadout
 measure(const DateTime& now)
 {
   // Replace the following lines with actual sensor readouts
-  const double temp = 0.25; //tempsensor.readTempC();
+  const double temp = 0.25; // tempsensor.readTempC();
   const double hum = 0.5;
 
   msg_println(F("Measurements taken."));
