@@ -3,7 +3,7 @@
 
 namespace cvslpr {
 
-extern bool bluetooth_wakeup;
+extern volatile bool bluetooth_wakeup;
 
 [[nodiscard]] bool
 init_bluetooth();

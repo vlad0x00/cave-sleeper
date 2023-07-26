@@ -12,13 +12,13 @@ bool
 init_sensors()
 {
   Wire.begin();
-
-  if (tempsensor.begin()) {
-    msg_println(F("Temperature sensor initialized."));
-    return true;
-  }
-  msg_println(F("Failed to initialize temperature sensor."));
-  return false;
+  return true;
+  // if (tempsensor.begin()) {
+  //   msg_println(F("Temperature sensor initialized."));
+  //   return true;
+  // }
+  // msg_println(F("Failed to initialize temperature sensor."));
+  // return false;
 }
 
 SensorsReadout

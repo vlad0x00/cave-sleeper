@@ -35,6 +35,8 @@ constexpr inline byte ALARM_BITS = ALRM1_SET;
 static DS3231 rtcclock;
 static RTClib rtclib;
 
+volatile bool rtc_wakeup = false;
+
 char*
 format_time(const DateTime& dt)
 {
@@ -75,6 +77,7 @@ static void
 on_rtc_wakeup()
 {
   msg_println(F("Woken up by RTC."));
+  rtc_wakeup = true;
 }
 
 DateTime

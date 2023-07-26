@@ -5,6 +5,8 @@
 #include "sensors.hpp"
 #include "sleep.hpp"
 
+#include <Arduino.h>
+
 namespace cvslpr {
 
 // How long to wait after booting before running any code. Useful in order to
@@ -39,12 +41,15 @@ setup()
     if (!(init_log() && init_rtc() && init_sensors() && init_bluetooth())) {
       status_good = false;
       msg_println(F("Initialization failed."));
-      go_sleep();
+      go_sleep(true);
     }
     msg_println(F("Initialization successful."));
   } else {
-    go_sleep();
+    go_sleep(true);
   }
+
+  noInterrupts();
+  rtc_wakeup = true;
 }
 
 void
@@ -52,14 +57,25 @@ loop()
 {
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
     if (status_good) {
-      const auto now = get_current_time();
-      measure(now);
-      set_alarm_time(now);
-      go_sleep();
       if (bluetooth_wakeup) {
         bluetooth_transfer_data();
         bluetooth_wakeup = false;
       }
+      if (rtc_wakeup) {
+        const auto now = get_current_time();
+        const auto readout = measure(now);
+        log(readout, now);
+        set_alarm_time(now);
+        rtc_wakeup = false;
+      }
+
+      interrupts();
+
+      go_sleep(!bluetooth_wakeup && !rtc_wakeup);
+
+      noInterrupts();
+    } else {
+      interrupts();
     }
   }
 }

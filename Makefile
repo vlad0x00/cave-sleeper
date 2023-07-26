@@ -1,6 +1,9 @@
-all: compile
+all:
+	$(MAKE) compile
+	$(MAKE) upload
+	$(MAKE) monitor
 
-BOARD=arduino:avr:nano
+BOARD=arduino:avr:nano:cpu=atmega328old
 PORT=/dev/ttyUSB0
 
 compile:

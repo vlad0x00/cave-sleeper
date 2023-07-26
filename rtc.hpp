@@ -15,6 +15,8 @@ constexpr inline bool INIT_RTC_TIME = false;
 // immediately after. Useful for debugging. Implies INIT_RTC_TIME.
 constexpr inline bool INIT_RTC_TIME_AND_RUN = false;
 
+extern volatile bool rtc_wakeup;
+
 char*
 format_time(const DateTime& dt);
 

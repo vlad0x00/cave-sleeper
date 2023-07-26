@@ -14,7 +14,7 @@ constexpr inline int BLUETOOTH_RX_PIN = 5;
 constexpr inline int BLUETOOTH_TX_PIN = 6;
 
 static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
-bool bluetooth_wakeup = false;
+volatile bool bluetooth_wakeup = false;
 
 bool
 init_bluetooth()
@@ -25,17 +25,6 @@ init_bluetooth()
                   RISING);
 
   bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE);
-  bluetooth.write("AT");
-
-  delay(200);
-
-  const auto o = bluetooth.read();
-  const auto k = bluetooth.read();
-  if (o != 'O' || k != 'K') {
-    msg_println(F("Bluetooth not initialized."));
-    return false;
-  }
-
   return true;
 }
 

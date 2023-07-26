@@ -12,7 +12,7 @@ namespace cvslpr {
 constexpr inline int SD_CS = 4; // SD chip select
 
 // Set to true to enable readable, but unoptimized, log format
-constexpr inline bool TEXT_LOG_FORMAT = false;
+constexpr inline bool TEXT_LOG_FORMAT = true;
 
 // Set to true to resume the previous log found on the SD card, if any.
 // If there isn't one, a new file is created. If disabled,
