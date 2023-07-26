@@ -48,7 +48,6 @@ setup()
     go_sleep(true);
   }
 
-  noInterrupts();
   rtc_wakeup = true;
 }
 
@@ -69,13 +68,7 @@ loop()
         rtc_wakeup = false;
       }
 
-      interrupts();
-
       go_sleep(!bluetooth_wakeup && !rtc_wakeup);
-
-      noInterrupts();
-    } else {
-      interrupts();
     }
   }
 }
