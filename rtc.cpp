@@ -40,9 +40,9 @@ volatile bool rtc_wakeup = false;
 char*
 format_time(const DateTime& dt)
 {
-  static char time_str[] = "0000-00-00,00:00:00";
+  static char time_str[] = "0000-00-00T00:00:00Z";
   sprintf(time_str,
-          "%04d-%02d-%02d,%02d:%02d:%02d",
+          "%04d-%02d-%02dT%02d:%02d:%02dZ",
           dt.year(),
           dt.month(),
           dt.day(),

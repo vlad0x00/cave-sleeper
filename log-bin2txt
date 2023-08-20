@@ -6,7 +6,7 @@ import struct
 import time
 
 TEXT_LOG_PREAMBLE = 'TextLog_v'
-TEXT_LOG_HEADER = 'utc_date,utc_time,temperature'
+TEXT_LOG_HEADER = 'datetime,temperature,humidity'
 BINARY_LOG_PREAMBLE = 'BinaryLog_v'
 PREAMBLE_END_TOKEN = b'\n'
 ENDIANNESS_SIGNATURE = (78 << 24) | (185 << 16) | (219 << 8) | (110)
