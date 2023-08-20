@@ -1,4 +1,5 @@
 #include "sleep.hpp"
+#include "config.hpp"
 
 namespace cvslpr {
 

@@ -8,6 +8,7 @@ init_led();
 
 void
 led_signal_good();
+
 void
 led_signal_error_perpetual();
 

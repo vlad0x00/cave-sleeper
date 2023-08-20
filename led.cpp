@@ -1,10 +1,9 @@
 #include "led.hpp"
+#include "config.hpp"
 
 #include <Arduino.h>
 
 namespace cvslpr {
-
-constexpr inline int LED_PIN = 9;
 
 bool
 init_led()

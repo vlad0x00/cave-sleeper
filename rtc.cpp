@@ -1,18 +1,10 @@
 #include "rtc.hpp"
+#include "config.hpp"
 #include "print.hpp"
 
 #include <Arduino.h>
 
 namespace cvslpr {
-
-// Offset from UTC for the computer this code is compiled on.
-// This is needed in order to determine the current UTC time
-// to upload it to the RTC.
-constexpr inline int COMPILATION_TIMEZONE = -7;
-
-constexpr inline int RTC_INTERRUPT_PIN = 2;
-
-constexpr inline int SLEEP_DURATION = 15; // * 60; // In seconds
 
 constexpr inline byte ALRM1_MATCH_EVERY_SEC = 0x0F; // Once a second
 constexpr inline byte ALRM1_MATCH_SEC = 0x0E;       // When seconds match

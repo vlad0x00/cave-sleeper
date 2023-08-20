@@ -1,4 +1,5 @@
 #include "log.hpp"
+#include "config.hpp"
 #include "print.hpp"
 
 #include <SD.h>
@@ -8,16 +9,6 @@
 #include <string.h>
 
 namespace cvslpr {
-
-constexpr inline int SD_CS = 4; // SD chip select
-
-// Set to true to enable readable, but unoptimized, log format
-constexpr inline bool TEXT_LOG_FORMAT = true;
-
-// Set to true to resume the previous log found on the SD card, if any.
-// If there isn't one, a new file is created. If disabled,
-// the previous log deleted, if present, and a new one is started.
-constexpr inline bool RESUME_PREVIOUS_LOG = false;
 
 constexpr inline uint32_t ENDIANNESS_SIGNATURE =
   (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) |

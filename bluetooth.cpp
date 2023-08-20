@@ -1,4 +1,5 @@
 #include "bluetooth.hpp"
+#include "config.hpp"
 #include "log.hpp"
 #include "print.hpp"
 
@@ -7,14 +8,6 @@
 #include <SoftwareSerial.h>
 
 namespace cvslpr {
-
-constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_CMD = 38400;
-constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_DATA = 9600;
-constexpr inline int BLUETOOTH_INTERRUPT_PIN = 3;
-constexpr inline int BLUETOOTH_RX_PIN = 5;
-constexpr inline int BLUETOOTH_TX_PIN = 6;
-constexpr inline int BLUETOOTH_KEY_PIN = 7;
-constexpr inline int BLUETOOTH_ON_PIN = 8;
 
 static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 volatile bool bluetooth_wakeup = false;

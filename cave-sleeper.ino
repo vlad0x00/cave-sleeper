@@ -1,4 +1,5 @@
 #include "bluetooth.hpp"
+#include "config.hpp"
 #include "i2c.hpp"
 #include "led.hpp"
 #include "log.hpp"
@@ -10,11 +11,6 @@
 #include <Arduino.h>
 
 namespace cvslpr {
-
-// How long to wait after booting before running any code. Useful in order to
-// avoid code execution on boot in case you instead want to upload different
-// code.
-constexpr inline unsigned STARTUP_DELAY = 5000;
 
 // Set to false if initialization or a component fails.
 // If false, the main loop executes nothing.

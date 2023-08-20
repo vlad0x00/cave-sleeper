@@ -1,4 +1,5 @@
 #include "sensors.hpp"
+#include "config.hpp"
 #include "print.hpp"
 
 #include <SparkFun_TMP117.h>
