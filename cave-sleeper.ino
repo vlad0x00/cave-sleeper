@@ -1,4 +1,5 @@
 #include "bluetooth.hpp"
+#include "led.hpp"
 #include "log.hpp"
 #include "print.hpp"
 #include "rtc.hpp"
@@ -41,9 +42,10 @@ setup()
     if (!(init_log() && init_rtc() && init_sensors() && init_bluetooth())) {
       status_good = false;
       msg_println(F("Initialization failed."));
-      go_sleep(true);
+      led_signal_error_perpetual();
     }
     msg_println(F("Initialization successful."));
+    led_signal_good();
   } else {
     go_sleep(true);
   }
