@@ -19,7 +19,9 @@ constexpr inline int BLUETOOTH_ON_PIN = 8;
 static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 volatile bool bluetooth_wakeup = false;
 
-static bool test_bluetooth() {
+static bool
+test_bluetooth()
+{
   // We need to turn off the bluetooth module to change the mode
   digitalWrite(BLUETOOTH_ON_PIN, LOW);
   digitalWrite(BLUETOOTH_KEY_PIN, HIGH);
