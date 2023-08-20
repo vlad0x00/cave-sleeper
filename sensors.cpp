@@ -11,7 +11,6 @@ static TMP117 tempsensor;
 bool
 init_sensors()
 {
-  Wire.begin();
   return true;
   // if (tempsensor.begin()) {
   //   msg_println(F("Temperature sensor initialized."));

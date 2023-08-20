@@ -1,4 +1,5 @@
 #include "bluetooth.hpp"
+#include "i2c.hpp"
 #include "led.hpp"
 #include "log.hpp"
 #include "print.hpp"
@@ -39,7 +40,8 @@ setup()
   }
 
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
-    if (!(init_log() && init_rtc() && init_sensors() && init_bluetooth())) {
+    if (!(init_i2c() && init_log() && init_rtc() && init_sensors() &&
+          init_bluetooth())) {
       status_good = false;
       msg_println(F("Initialization failed."));
       led_signal_error_perpetual();
