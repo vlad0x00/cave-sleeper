@@ -12,7 +12,7 @@ constexpr inline int COMPILATION_TIMEZONE = -7;
 
 constexpr inline int RTC_INTERRUPT_PIN = 2;
 
-constexpr inline int SLEEP_DURATION = 15 * 60; // In seconds
+constexpr inline int SLEEP_DURATION = 15; // * 60; // In seconds
 
 constexpr inline byte ALRM1_MATCH_EVERY_SEC = 0x0F; // Once a second
 constexpr inline byte ALRM1_MATCH_SEC = 0x0E;       // When seconds match
@@ -57,17 +57,20 @@ init_rtc_time()
 {
   msg_println(F("Beginning RTC time initialization..."));
 
-  const uint32_t unixtime =
+  const uint32_t utc_unixtime =
     DateTime(__DATE__, __TIME__).unixtime() - COMPILATION_TIMEZONE * 60 * 60;
-  DateTime dt_utc(unixtime);
+  DateTime utc(utc_unixtime);
+
+  msg_print(F("Initializing RTC time to: "));
+  msg_println(format_time(utc));
 
   rtcclock.setClockMode(false);
-  rtcclock.setYear(dt_utc.year() - 2000);
-  rtcclock.setMonth(dt_utc.month());
-  rtcclock.setDate(dt_utc.day());
-  rtcclock.setHour(dt_utc.hour());
-  rtcclock.setMinute(dt_utc.minute());
-  rtcclock.setSecond(dt_utc.second());
+  rtcclock.setYear(utc.year() - 2000);
+  rtcclock.setMonth(utc.month());
+  rtcclock.setDate(utc.day());
+  rtcclock.setHour(utc.hour());
+  rtcclock.setMinute(utc.minute());
+  rtcclock.setSecond(utc.second());
 
   msg_print(F("RTC time initialized to: "));
   msg_println(format_time(rtclib.now()));

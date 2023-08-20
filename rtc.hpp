@@ -13,7 +13,7 @@ constexpr inline bool INIT_RTC_TIME = false;
 
 // Set to true to both initialize RTC time and run the regular functionality
 // immediately after. Useful for debugging. Implies INIT_RTC_TIME.
-constexpr inline bool INIT_RTC_TIME_AND_RUN = false;
+constexpr inline bool INIT_RTC_TIME_AND_RUN = true;
 
 extern volatile bool rtc_wakeup;
 
