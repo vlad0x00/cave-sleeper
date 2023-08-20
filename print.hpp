@@ -13,7 +13,9 @@ constexpr inline long SERIAL_BAUD_RATE = 9600;
 [[nodiscard]] inline bool
 init_print()
 {
-  Serial.begin(SERIAL_BAUD_RATE);
+  if constexpr (PRINT_DEBUG) {
+    Serial.begin(SERIAL_BAUD_RATE);
+  }
   return true;
 }
 
