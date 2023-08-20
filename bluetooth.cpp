@@ -8,23 +8,72 @@
 
 namespace cvslpr {
 
-constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE = 9600;
+constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_CMD = 38400;
+constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_DATA = 9600;
 constexpr inline int BLUETOOTH_INTERRUPT_PIN = 3;
 constexpr inline int BLUETOOTH_RX_PIN = 5;
 constexpr inline int BLUETOOTH_TX_PIN = 6;
+constexpr inline int BLUETOOTH_KEY_PIN = 7;
+constexpr inline int BLUETOOTH_ON_PIN = 8;
 
 static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 volatile bool bluetooth_wakeup = false;
+
+static bool test_bluetooth() {
+  // We need to turn off the bluetooth module to change the mode
+  digitalWrite(BLUETOOTH_ON_PIN, LOW);
+  digitalWrite(BLUETOOTH_KEY_PIN, HIGH);
+  delay(200);
+  // Turn on the bluetooth module
+  digitalWrite(BLUETOOTH_ON_PIN, HIGH);
+
+  bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE_CMD);
+
+  // Check if the module responds
+  bluetooth.write(F("AT\r\n"));
+  bluetooth.flush();
+
+  // Let the bluetooth module respond
+  delay(500);
+
+  // Ensure that the response is "OK"
+  if (!bluetooth.available() || bluetooth.read() != 'O' ||
+      !bluetooth.available() || bluetooth.read() != 'K') {
+    return false;
+  }
+  // Discard the rest of the response
+  while (bluetooth.available()) {
+    bluetooth.read();
+  }
+
+  // Turn the module off again to revert to data mode
+  digitalWrite(BLUETOOTH_ON_PIN, LOW);
+  digitalWrite(BLUETOOTH_KEY_PIN, LOW);
+  delay(200);
+  // Turn on the bluetooth module
+  digitalWrite(BLUETOOTH_KEY_PIN, HIGH);
+
+  return true;
+}
 
 bool
 init_bluetooth()
 {
   pinMode(BLUETOOTH_INTERRUPT_PIN, INPUT);
+  pinMode(BLUETOOTH_KEY_PIN, OUTPUT);
+  pinMode(BLUETOOTH_ON_PIN, OUTPUT);
+
+  if (!test_bluetooth()) {
+    msg_println(F("Bluetooth module not responding."));
+    return false;
+  }
+
+  bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE_DATA);
   attachInterrupt(digitalPinToInterrupt(BLUETOOTH_INTERRUPT_PIN),
                   on_bluetooth_wakeup,
                   RISING);
 
-  bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE);
+  msg_println(F("Bluetooth module initialized."));
   return true;
 }
 

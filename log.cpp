@@ -31,10 +31,10 @@ static bool
 init_sd()
 {
   if (SD.begin(SD_CS)) {
-    msg_println(F("SD card initialized."));
+    msg_println(F("SD card module initialized."));
     return true;
   }
-  msg_println(F("Failed to initialize SD card."));
+  msg_println(F("Failed to initialize SD card module."));
   return false;
 }
 
