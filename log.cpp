@@ -21,7 +21,7 @@ static File logfile;
 static bool
 init_sd()
 {
-  if (SD.begin(SD_CS)) {
+  if (SD.begin(SD_CS_PIN)) {
     msg_println(F("SD card module initialized."));
     return true;
   }

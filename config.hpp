@@ -5,6 +5,7 @@ namespace cvslpr {
 
 constexpr inline int RTC_INTERRUPT_PIN = 2;
 constexpr inline int BLUETOOTH_INTERRUPT_PIN = 3;
+constexpr inline int SD_CS_PIN = 4;
 constexpr inline int BLUETOOTH_RX_PIN = 5;
 constexpr inline int BLUETOOTH_TX_PIN = 6;
 constexpr inline int BLUETOOTH_KEY_PIN = 7;
@@ -27,8 +28,6 @@ constexpr inline unsigned STARTUP_DELAY = 5000;
 // Preamble is used to indicate the format of the log
 const char TEXT_LOG_PREAMBLE[] = "TextLog_v1\n";
 const char TEXT_LOG_HEADER[] = "datetime,temperature,humidity\n";
-
-constexpr inline int SD_CS = 4; // SD chip select
 
 // Set to true to enable readable, but unoptimized, log format
 constexpr inline bool TEXT_LOG_FORMAT = true;
