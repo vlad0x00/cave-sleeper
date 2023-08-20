@@ -2,7 +2,6 @@
 #include "print.hpp"
 
 #include <SparkFun_TMP117.h>
-#include <Wire.h>
 
 namespace cvslpr {
 
