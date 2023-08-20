@@ -25,23 +25,27 @@ setup()
 {
   delay(STARTUP_DELAY);
 
+  // Init print first so that we can inform the user of any errors
   if (!init_print()) {
     status_good = false;
     return;
   }
-  if (!init_sleep()) {
+
+  // Init basic functionalities
+  if (!init_i2c() || !init_sleep()) {
     status_good = false;
     msg_println(F("Initialization failed."));
     return;
   }
 
+  // Should RTC be initialized?
   if constexpr (INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
     init_rtc_time();
   }
 
+  // Init the rest of the components
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
-    if (!(init_i2c() && init_log() && init_rtc() && init_sensors() &&
-          init_bluetooth())) {
+    if (!(init_log() && init_rtc() && init_sensors() && init_bluetooth())) {
       status_good = false;
       msg_println(F("Initialization failed."));
       led_signal_error_perpetual();
