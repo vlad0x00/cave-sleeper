@@ -34,7 +34,7 @@ measure(const DateTime& now)
   msg_print(F("Humidity = "));
   msg_println(hum);
 
-  return SensorsReadout{ temp, 0.0 };
+  return SensorsReadout{ temp, hum };
 }
 
 } // namespace cvslpr

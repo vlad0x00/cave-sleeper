@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "print.hpp"
 
+#include <Arduino.h>
 #include <SD.h>
 #include <SPI.h>
 
@@ -18,13 +19,21 @@ constexpr inline uint32_t ENDIANNESS_BYTES =
   (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) |
   (uint32_t(110));
 
+const char FormattedLogEntry::HEADER[] = "datetime,temperature,humidity\n";
+const int FormattedLogEntry::TEMP_WIDTH = 6;
+const int FormattedLogEntry::HUM_WIDTH = 6;
+const int FormattedLogEntry::PRECISION = 2;
+
 FormattedLogEntry::FormattedLogEntry(const LogEntry& entry)
 {
-  sprintf(data,
-          "%s,%.2f,%.2f",
-          format_time(entry.timestamp).time,
-          entry.temperature,
-          entry.humidity);
+  char temp_buf[TEMP_WIDTH];
+  char hum_buf[HUM_WIDTH];
+  snprintf(data,
+           sizeof(data),
+           "%s,%s,%s\n",
+           format_time(entry.timestamp).time,
+           dtostrf(entry.temperature, 1, PRECISION, (char*)temp_buf),
+           dtostrf(entry.humidity, 1, PRECISION, (char*)hum_buf));
   size = strlen(data);
 }
 
@@ -88,9 +97,6 @@ open_log()
     return {};
   }
 
-  // Seek to the end of the file
-  f.seek(f.size());
-
   return f;
 }
 
@@ -118,6 +124,8 @@ init_log()
     if (found_prev) {
       logfile = open_log();
       if (logfile) {
+        // Seek to the end of the file
+        logfile.seek(logfile.size());
         return true;
       } else {
         msg_println(F("Failed to open log file for appending."));

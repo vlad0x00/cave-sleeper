@@ -31,7 +31,12 @@ struct LogEntry
 
 struct FormattedLogEntry
 {
-  char data[sizeof("0000-00-00T00:00:00Z,000.00,000.00")];
+  static const char HEADER[sizeof("datetime,temperature,humidity\n")];
+  static const int TEMP_WIDTH;
+  static const int HUM_WIDTH;
+  static const int PRECISION;
+
+  char data[sizeof("0000-00-00T00:00:00Z,000.00,000.00\n")];
   size_t size{ 0 };
 
   FormattedLogEntry(const LogEntry& entry);

@@ -88,6 +88,7 @@ bluetooth_transfer_data()
     return;
   }
 
+  bluetooth.write(FormattedLogEntry::HEADER);
   LogEntry entry;
   while (load_log_entry(logfile, entry)) {
     FormattedLogEntry formatted_entry(entry);
