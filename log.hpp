@@ -17,6 +17,8 @@ struct LogEntry
   double temperature;
   double humidity;
 
+  LogEntry() = default;
+
   LogEntry(const uint32_t timestamp,
            const double temperature,
            const double humidity)

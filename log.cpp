@@ -7,7 +7,6 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <tuple>
 
 namespace cvslpr {
 
@@ -18,8 +17,6 @@ const char LOG_FILENAME[] = "log";
 constexpr inline uint32_t ENDIANNESS_BYTES =
   (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) |
   (uint32_t(110));
-
-static_assert(sizeof(int) == sizeof(uint32_t), "int is not 32 bits.");
 
 FormattedLogEntry::FormattedLogEntry(const LogEntry& entry)
 {
@@ -153,7 +150,7 @@ deinit_log()
 void
 log(const SensorsReadout& readout, const DateTime& now)
 {
-  const int unixtime = now.unixtime();
+  const auto unixtime = now.unixtime();
 
   const LogEntry entry(unixtime, readout.temp, readout.hum);
 

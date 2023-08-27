@@ -1,5 +1,6 @@
 #include "rtc.hpp"
 #include "config.hpp"
+#include "log.hpp"
 #include "print.hpp"
 
 #include <Arduino.h>
@@ -29,7 +30,7 @@ static RTClib rtclib;
 
 volatile bool rtc_wakeup = false;
 
-char*
+FormattedTime
 format_time(const DateTime& dt)
 {
   FormattedTime time;
