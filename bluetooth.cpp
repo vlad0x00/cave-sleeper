@@ -18,7 +18,7 @@ test_bluetooth()
   // We need to turn off the bluetooth module to change the mode
   digitalWrite(BLUETOOTH_ON_PIN, LOW);
   digitalWrite(BLUETOOTH_KEY_PIN, HIGH);
-  delay(200);
+  delay(300);
   // Turn on the bluetooth module
   digitalWrite(BLUETOOTH_ON_PIN, HIGH);
 
@@ -44,7 +44,7 @@ test_bluetooth()
   // Turn the module off again to revert to data mode
   digitalWrite(BLUETOOTH_ON_PIN, LOW);
   digitalWrite(BLUETOOTH_KEY_PIN, LOW);
-  delay(200);
+  delay(300);
   // Turn on the bluetooth module
   digitalWrite(BLUETOOTH_KEY_PIN, HIGH);
 
@@ -54,7 +54,6 @@ test_bluetooth()
 bool
 init_bluetooth()
 {
-  pinMode(BLUETOOTH_INTERRUPT_PIN, INPUT);
   pinMode(BLUETOOTH_KEY_PIN, OUTPUT);
   pinMode(BLUETOOTH_ON_PIN, OUTPUT);
 
@@ -64,6 +63,7 @@ init_bluetooth()
   }
 
   bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE_DATA);
+  pinMode(BLUETOOTH_INTERRUPT_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(BLUETOOTH_INTERRUPT_PIN),
                   on_bluetooth_wakeup,
                   RISING);
