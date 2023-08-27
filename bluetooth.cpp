@@ -82,14 +82,20 @@ on_bluetooth_wakeup()
 void
 bluetooth_transfer_data()
 {
-  auto logfile = SD.open(LOG_FILENAME, FILE_READ);
-  for (;;) {
-    const auto b = logfile.read();
-    if (b < 0) {
-      break;
-    }
-    bluetooth.write(b);
+  auto logfile = open_log();
+  if (!logfile) {
+    bluetooth.write(F("Failed to open log file."));
+    return;
   }
+
+  LogEntry entry;
+  while (load_log_entry(logfile, entry)) {
+    FormattedLogEntry formatted_entry(entry);
+    bluetooth.write((const uint8_t*)(formatted_entry.data),
+                    formatted_entry.size);
+  }
+  bluetooth.flush();
+
   logfile.close();
 }
 

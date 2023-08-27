@@ -32,8 +32,8 @@ volatile bool rtc_wakeup = false;
 char*
 format_time(const DateTime& dt)
 {
-  static char time_str[] = "0000-00-00T00:00:00Z";
-  sprintf(time_str,
+  FormattedTime time;
+  sprintf(time.time,
           "%04d-%02d-%02dT%02d:%02d:%02dZ",
           dt.year(),
           dt.month(),
@@ -41,7 +41,7 @@ format_time(const DateTime& dt)
           dt.hour(),
           dt.minute(),
           dt.second());
-  return time_str;
+  return time;
 }
 
 void
@@ -54,7 +54,7 @@ init_rtc_time()
   DateTime utc(utc_unixtime);
 
   msg_print(F("Initializing RTC time to: "));
-  msg_println(format_time(utc));
+  msg_println(format_time(utc).time);
 
   rtcclock.setClockMode(false);
   rtcclock.setYear(utc.year() - 2000);
@@ -65,7 +65,7 @@ init_rtc_time()
   rtcclock.setSecond(utc.second());
 
   msg_print(F("RTC time initialized to: "));
-  msg_println(format_time(rtclib.now()));
+  msg_println(format_time(rtclib.now()).time);
 }
 
 static void
@@ -80,7 +80,7 @@ get_current_time()
 {
   const auto now = rtclib.now();
   msg_print(F("Current time: "));
-  msg_println(format_time(now));
+  msg_println(format_time(now).time);
   return now;
 }
 
@@ -98,7 +98,7 @@ set_alarm_time(const DateTime& now)
                      false,
                      false);
   msg_print(F("Alarm set for: "));
-  msg_println(format_time(dt_alarm));
+  msg_println(format_time(dt_alarm).time);
 }
 
 bool

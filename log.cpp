@@ -7,18 +7,50 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <tuple>
 
 namespace cvslpr {
 
-constexpr inline uint32_t ENDIANNESS_SIGNATURE =
+// Preamble is used to indicate the format of the log
+const char LOG_PREAMBLE[] = "Log_v2";
+const char LOG_FILENAME[] = "log";
+
+constexpr inline uint32_t ENDIANNESS_BYTES =
   (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) |
   (uint32_t(110));
-constexpr inline uint32_t INT_SIZE = sizeof(int);
-constexpr inline uint32_t DOUBLE_SIZE = sizeof(double);
+
+static_assert(sizeof(int) == sizeof(uint32_t), "int is not 32 bits.");
+
+FormattedLogEntry::FormattedLogEntry(const LogEntry& entry)
+{
+  sprintf(data,
+          "%s,%.2f,%.2f",
+          format_time(entry.timestamp).time,
+          entry.temperature,
+          entry.humidity);
+  size = strlen(data);
+}
+
+struct LogMeta
+{
+  char preamble[sizeof(LOG_PREAMBLE)];
+  uint32_t endianness_bytes{ ENDIANNESS_BYTES };
+  uint32_t int_size{ sizeof(int) };
+  uint32_t double_size{ sizeof(int) };
+
+  LogMeta() { memcpy(preamble, LOG_PREAMBLE, sizeof(LOG_PREAMBLE)); }
+
+  bool operator==(const LogMeta& other) const
+  {
+    return !memcmp(this, &other, sizeof(LogMeta));
+  }
+
+  operator bool() const { return int_size != 0; }
+} __attribute__((packed)) DEFAULT_META;
 
 static File logfile;
 
-static bool
+[[nodiscard]] static bool
 init_sd()
 {
   if (SD.begin(SD_CS_PIN)) {
@@ -27,6 +59,42 @@ init_sd()
   }
   msg_println(F("Failed to initialize SD card module."));
   return false;
+}
+
+[[nodiscard]] static LogMeta
+get_meta(File& logfile)
+{
+  if (logfile.available() < sizeof(LogMeta)) {
+    msg_println(F("Log file too short."));
+    return {};
+  }
+
+  LogMeta meta;
+  logfile.readBytes((char*)(&meta), sizeof(LogMeta));
+  return meta;
+}
+
+File
+open_log()
+{
+  File f = SD.open(LOG_FILENAME, FILE_WRITE);
+  f.seek(0UL);
+
+  const auto meta = get_meta(f);
+  if (!meta) {
+    msg_println(F("Failed to read log meta."));
+    return {};
+  }
+
+  if (meta != DEFAULT_META) {
+    msg_println(F("Loaded meta is different from expected."));
+    return {};
+  }
+
+  // Seek to the end of the file
+  f.seek(f.size());
+
+  return f;
 }
 
 bool
@@ -51,41 +119,11 @@ init_log()
 
   if constexpr (RESUME_PREVIOUS_LOG) {
     if (found_prev) {
-      logfile = SD.open(LOG_FILENAME, FILE_READ);
-      if (!logfile) {
-        msg_println(F("Failed to open previous log file."));
-        return false;
-      }
-
-      // Load the preamble of the previous log
-      constexpr size_t PREAMBLE_BUFFER_SIZE = TEXT_LOG_FORMAT
-                                                ? sizeof(TEXT_LOG_PREAMBLE)
-                                                : sizeof(BINARY_LOG_PREAMBLE);
-      const char* EXPECTED_PREAMBLE =
-        TEXT_LOG_FORMAT ? TEXT_LOG_PREAMBLE : BINARY_LOG_PREAMBLE;
-
-      char preamble[PREAMBLE_BUFFER_SIZE];
-      size_t i = 0;
-      while (logfile.available()) {
-        if (i == PREAMBLE_BUFFER_SIZE - 1) {
-          msg_println(F("Preamble too long in previous log."));
-          logfile.close();
-          return false;
-        }
-        const char c = logfile.read();
-        preamble[i++] = c;
-        if (c == PREAMBLE_END_TOKEN) {
-          break;
-        }
-      }
-      preamble[i++] = '\0';
-      logfile.close();
-      if (strcmp(EXPECTED_PREAMBLE, preamble)) {
-        msg_println(F("Loaded preamble is different from expected."));
-        msg_print(F("Expected: "));
-        msg_println(EXPECTED_PREAMBLE);
-        msg_print(F("Found: "));
-        msg_println(preamble);
+      logfile = open_log();
+      if (logfile) {
+        return true;
+      } else {
+        msg_println(F("Failed to open log file for appending."));
         return false;
       }
     }
@@ -95,19 +133,8 @@ init_log()
   if (logfile) {
     msg_println(F("Log file opened for writing."));
 
-    if (!RESUME_PREVIOUS_LOG || !found_prev) {
-      if constexpr (TEXT_LOG_FORMAT) {
-        logfile.print(TEXT_LOG_PREAMBLE);
-        logfile.print(TEXT_LOG_HEADER);
-      } else {
-        logfile.write(BINARY_LOG_PREAMBLE, sizeof(BINARY_LOG_PREAMBLE) - 1);
-        logfile.write((byte*)(&ENDIANNESS_SIGNATURE),
-                      sizeof(ENDIANNESS_SIGNATURE));
-        logfile.write((byte*)(&INT_SIZE), sizeof(INT_SIZE));
-        logfile.write((byte*)(&DOUBLE_SIZE), sizeof(DOUBLE_SIZE));
-      }
-      logfile.flush();
-    }
+    logfile.write((byte*)(&DEFAULT_META), sizeof(DEFAULT_META));
+    logfile.flush();
 
     return true;
   }
@@ -126,23 +153,25 @@ deinit_log()
 void
 log(const SensorsReadout& readout, const DateTime& now)
 {
-  if constexpr (TEXT_LOG_FORMAT) {
-    logfile.print(format_time(now));
-    logfile.print(',');
-    logfile.print(readout.temp);
-    logfile.print(',');
-    logfile.print(readout.hum);
-    logfile.print('\n');
-  } else {
-    const auto unixtime = now.unixtime();
-    logfile.write((byte*)(&unixtime), sizeof(unixtime));
-    logfile.write((byte*)(&readout.temp), sizeof(readout.temp));
-    logfile.write((byte*)(&readout.hum), sizeof(readout.hum));
-  }
+  const int unixtime = now.unixtime();
 
+  const LogEntry entry(unixtime, readout.temp, readout.hum);
+
+  logfile.write((byte*)(&entry), sizeof(LogEntry));
   logfile.flush();
 
   msg_println(F("Measurements written to the SD card."));
+}
+
+bool
+load_log_entry(File& logfile, LogEntry& entry)
+{
+  if (logfile.available() < sizeof(LogEntry)) {
+    return false;
+  }
+
+  logfile.readBytes((char*)(&entry), sizeof(LogEntry));
+  return true;
 }
 
 } // namespace cvslpr

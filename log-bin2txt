@@ -5,11 +5,10 @@ import sys
 import struct
 import time
 
-TEXT_LOG_PREAMBLE = 'TextLog_v'
 TEXT_LOG_HEADER = 'datetime,temperature,humidity'
-BINARY_LOG_PREAMBLE = 'BinaryLog_v'
+LOG_PREAMBLE = 'Log_v'
 PREAMBLE_END_TOKEN = b'\n'
-ENDIANNESS_SIGNATURE = (78 << 24) | (185 << 16) | (219 << 8) | (110)
+ENDIANNESS_BYTES = (78 << 24) | (185 << 16) | (219 << 8) | (110)
 
 def get_cli_args():
   parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="Convert an optimized binary log to a readable, text log.")
@@ -32,11 +31,11 @@ def readcheck(binfile, numbytes, exit=False):
 def v1_conversion(binfile, txtfile):
   b = readcheck(binfile, 4, True)
   signature = struct.unpack('<I', b)[0]
-  if signature == ENDIANNESS_SIGNATURE:
+  if signature == ENDIANNESS_BYTES:
     endianness = '<'
   else:
     signature = struct.unpack('>I', b)[0]
-    if signature == ENDIANNESS_SIGNATURE:
+    if signature == ENDIANNESS_BYTES:
       endianness = '>'
     else:
       print("Invalid log file endianness. Exiting.")
@@ -85,11 +84,8 @@ if __name__ == "__main__":
       if b == b'\x00' or b == b'': break
       header += b.decode()
       if b == PREAMBLE_END_TOKEN: break
-    if header.startswith(TEXT_LOG_PREAMBLE):
-      print(f"{cli_args.binary_logifle} is a text log, and not a binary log. Exiting.")
-      sys.exit(-1)
-    elif header.startswith(BINARY_LOG_PREAMBLE):
-      version = int(header[len(BINARY_LOG_PREAMBLE):])
+    if header.startswith(LOG_PREAMBLE):
+      version = int(header[len(LOG_PREAMBLE):])
       conversion_table[version](binfile, txtfile)
     else:
       print("Invalid or unknown log preamble. Exiting.")

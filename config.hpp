@@ -25,13 +25,6 @@ constexpr inline long SERIAL_BAUD_RATE = 9600;
 // code.
 constexpr inline unsigned STARTUP_DELAY = 5000;
 
-// Preamble is used to indicate the format of the log
-const char TEXT_LOG_PREAMBLE[] = "TextLog_v1\n";
-const char TEXT_LOG_HEADER[] = "datetime,temperature,humidity\n";
-
-// Set to true to enable readable, but unoptimized, log format
-constexpr inline bool TEXT_LOG_FORMAT = true;
-
 // Set to true to resume the previous log found on the SD card, if any.
 // If there isn't one, a new file is created. If disabled,
 // the previous log deleted, if present, and a new one is started.

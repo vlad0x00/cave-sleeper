@@ -4,12 +4,36 @@
 #include "rtc.hpp"
 #include "sensors.hpp"
 
+#include <SD.h>
+
+#include <stddef.h>
+#include <stdint.h>
+
 namespace cvslpr {
 
-const char BINARY_LOG_PREAMBLE[] = "BinaryLog_v1\n";
-const char PREAMBLE_END_TOKEN = '\n';
+struct LogEntry
+{
+  uint32_t timestamp;
+  double temperature;
+  double humidity;
 
-const char LOG_FILENAME[] = "log";
+  LogEntry(const uint32_t timestamp,
+           const double temperature,
+           const double humidity)
+    : timestamp(timestamp)
+    , temperature(temperature)
+    , humidity(humidity)
+  {
+  }
+} __attribute__((packed));
+
+struct FormattedLogEntry
+{
+  char data[sizeof("0000-00-00T00:00:00Z,000.00,000.00")];
+  size_t size{ 0 };
+
+  FormattedLogEntry(const LogEntry& entry);
+} __attribute__((packed));
 
 [[nodiscard]] bool
 init_log();
@@ -19,6 +43,11 @@ deinit_log();
 
 void
 log(const SensorsReadout& readout, const DateTime& now);
+
+[[nodiscard]] File
+open_log();
+[[nodiscard]] bool
+load_log_entry(File& logfile, LogEntry& entry);
 
 } // namespace cvslpr
 

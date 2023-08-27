@@ -7,7 +7,12 @@ namespace cvslpr {
 
 extern volatile bool rtc_wakeup;
 
-char*
+struct FormattedTime
+{
+  char time[sizeof("0000-00-00T00:00:00Z")];
+};
+
+FormattedTime
 format_time(const DateTime& dt);
 
 void
