@@ -3,13 +3,30 @@
 
 namespace cvslpr {
 
+// The RTC should send a falling edge interrupt when the alarm expires
+// to the following pin.
 constexpr inline int RTC_INTERRUPT_PIN = 2;
+
+// The bluetooth module should send a rising edge interrupt when it
+// connects to a device to the following pin. The pin is likely named
+// "STATE" on the bluetooth module.
 constexpr inline int BLUETOOTH_INTERRUPT_PIN = 3;
+
+// The SD card chip select pin.
 constexpr inline int SD_CS_PIN = 4;
+
 constexpr inline int BLUETOOTH_RX_PIN = 5;
 constexpr inline int BLUETOOTH_TX_PIN = 6;
+
+// The following pin might be named "EN" on the bluetooth module.
 constexpr inline int BLUETOOTH_KEY_PIN = 7;
+
+// The microcontroller will set this pin to HIGH when it wants to
+// power on the bluetooth module and LOW when it wants to power it off.
 constexpr inline int BLUETOOTH_ON_PIN = 8;
+
+// The microcontroller will set this pin to HIGH when it wants to
+// turn on the LED.
 constexpr inline int LED_PIN = 9;
 
 constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_CMD = 38400;
