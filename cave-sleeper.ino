@@ -66,7 +66,7 @@ loop()
       }
       if (rtc_wakeup) {
         const auto now = get_current_time();
-        const auto readout = measure(now);
+        const auto readout = measure();
         log(readout, now);
         set_alarm_time(now);
         rtc_wakeup = false;

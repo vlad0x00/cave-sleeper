@@ -1,8 +1,6 @@
 #ifndef CAVE_SLEEPER_SENSORS_HPP
 #define CAVE_SLEEPER_SENSORS_HPP
 
-#include <DS3231.h>
-
 namespace cvslpr {
 
 struct SensorsReadout
@@ -21,7 +19,7 @@ struct SensorsReadout
 init_sensors();
 
 SensorsReadout
-measure(const DateTime& now);
+measure();
 
 } // namespace cvslpr
 

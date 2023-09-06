@@ -21,7 +21,7 @@ init_sensors()
 }
 
 SensorsReadout
-measure(const DateTime& now)
+measure()
 {
   // Replace the following lines with actual sensor readouts
   const double temp = 0.25; // tempsensor.readTempC();
