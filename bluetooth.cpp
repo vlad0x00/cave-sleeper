@@ -58,10 +58,12 @@ init_bluetooth()
   pinMode(BLUETOOTH_KEY_PIN, OUTPUT);
   pinMode(BLUETOOTH_ON_PIN, OUTPUT);
 
-  if (!test_bluetooth()) {
-    bluetooth_mode(BluetoothMode::COMMAND);
-    msg_println(F("Bluetooth module not responding."));
-    return false;
+  if constexpr (BLUETOOTH_TEST) {
+    if (!test_bluetooth()) {
+      bluetooth_mode(BluetoothMode::COMMAND);
+      msg_println(F("Bluetooth module not responding."));
+      return false;
+    }
   }
 
   bluetooth_mode(BluetoothMode::DATA);
