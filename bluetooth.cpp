@@ -12,18 +12,26 @@ namespace cvslpr {
 static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
 volatile bool bluetooth_wakeup = false;
 
+enum class BluetoothMode
+{
+  DATA,
+  COMMAND
+};
+
+static void
+bluetooth_mode(const BluetoothMode mode)
+{
+  digitalWrite(BLUETOOTH_ON_PIN, LOW);
+  digitalWrite(BLUETOOTH_KEY_PIN, mode == BluetoothMode::DATA ? LOW : HIGH);
+  delay(300);
+  digitalWrite(BLUETOOTH_ON_PIN, HIGH);
+  bluetooth.begin(mode == BluetoothMode::DATA ? BLUETOOTH_SERIAL_BAUD_RATE_DATA
+                                              : BLUETOOTH_SERIAL_BAUD_RATE_CMD);
+}
+
 static bool
 test_bluetooth()
 {
-  // We need to turn off the bluetooth module to change the mode
-  digitalWrite(BLUETOOTH_ON_PIN, LOW);
-  digitalWrite(BLUETOOTH_KEY_PIN, HIGH);
-  delay(300);
-  // Turn on the bluetooth module
-  digitalWrite(BLUETOOTH_ON_PIN, HIGH);
-
-  bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE_CMD);
-
   // Check if the module responds
   bluetooth.write(F("AT\r\n"));
   bluetooth.flush();
@@ -41,13 +49,6 @@ test_bluetooth()
     bluetooth.read();
   }
 
-  // Turn the module off again to revert to data mode
-  digitalWrite(BLUETOOTH_ON_PIN, LOW);
-  digitalWrite(BLUETOOTH_KEY_PIN, LOW);
-  delay(300);
-  // Turn on the bluetooth module
-  digitalWrite(BLUETOOTH_KEY_PIN, HIGH);
-
   return true;
 }
 
@@ -58,11 +59,13 @@ init_bluetooth()
   pinMode(BLUETOOTH_ON_PIN, OUTPUT);
 
   if (!test_bluetooth()) {
+    bluetooth_mode(BluetoothMode::COMMAND);
     msg_println(F("Bluetooth module not responding."));
     return false;
   }
 
-  bluetooth.begin(BLUETOOTH_SERIAL_BAUD_RATE_DATA);
+  bluetooth_mode(BluetoothMode::DATA);
+
   pinMode(BLUETOOTH_INTERRUPT_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(BLUETOOTH_INTERRUPT_PIN),
                   on_bluetooth_wakeup,

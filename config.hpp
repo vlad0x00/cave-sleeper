@@ -21,8 +21,15 @@ constexpr inline int BLUETOOTH_TX_PIN = 6;
 // The following pin might be named "EN" on the bluetooth module.
 constexpr inline int BLUETOOTH_KEY_PIN = 7;
 
+// If true, a test is run for whether the bluetooth module is
+// working properly. If false, the bluetooth module is assumed
+// to be working properly. Requires BLUETOOTH_ON_PIN to be used.
+constexpr inline bool BLUETOOTH_TEST = false;
+
 // The microcontroller will set this pin to HIGH when it wants to
 // power on the bluetooth module and LOW when it wants to power it off.
+// This requires some sort of setup (e.g. a transistor) to actually
+// power the bluetooth module.
 constexpr inline int BLUETOOTH_ON_PIN = 8;
 
 // The microcontroller will set this pin to HIGH when it wants to
