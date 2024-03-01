@@ -59,7 +59,7 @@ constexpr inline bool RESUME_PREVIOUS_LOG = false;
 // to upload it to the RTC.
 constexpr inline int COMPILATION_TIMEZONE = -7;
 
-constexpr inline int SLEEP_DURATION = 15; // * 60; // In seconds
+constexpr inline int SLEEP_DURATION = 15 * 60; // In seconds
 
 // Set to true to enable RTC time initialization only. Compile code with
 // this enabled, upload it to the microncontroller to initialize
