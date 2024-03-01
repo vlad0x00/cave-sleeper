@@ -21,7 +21,7 @@ led_signal_good()
   digitalWrite(LED_PIN, LOW);
 }
 
-void
+[[noreturn]] void
 led_signal_error_perpetual()
 {
   for (;;) {

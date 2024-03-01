@@ -21,17 +21,22 @@ setup()
 {
   delay(STARTUP_DELAY);
 
-  // Init print first so that we can inform the user of any errors
-  if (!init_print()) {
+  if (!init_led()) {
     status_good = false;
     return;
   }
 
-  // Init basic functionalities
-  if (!init_i2c() || !init_sleep()) {
+  // Init print first so that we can inform the user of any errors
+  if (!init_print()) {
+    status_good = false;
+    led_signal_error_perpetual();
+  }
+
+  // Init basic functionalities and RTC
+  if (!init_i2c() || !init_sleep() || !init_rtc()) {
     status_good = false;
     msg_println(F("Initialization failed."));
-    return;
+    led_signal_error_perpetual();
   }
 
   // Should RTC be initialized?
@@ -41,7 +46,7 @@ setup()
 
   // Init the rest of the components
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
-    if (!(init_log() && init_rtc() && init_sensors() && init_bluetooth())) {
+    if (!(init_log() && init_sensors() && init_bluetooth())) {
       status_good = false;
       msg_println(F("Initialization failed."));
       led_signal_error_perpetual();
@@ -68,7 +73,11 @@ loop()
         const auto now = get_current_time();
         const auto readout = measure();
         log(readout, now);
-        set_alarm_time(now);
+        if (!set_alarm_time(now)) {
+          status_good = false;
+          msg_println(F("Setting alarm failed."));
+          led_signal_error_perpetual();
+        }
         rtc_wakeup = false;
       }
 

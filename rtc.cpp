@@ -7,26 +7,7 @@
 
 namespace cvslpr {
 
-constexpr inline byte ALRM1_MATCH_EVERY_SEC = 0x0F; // Once a second
-constexpr inline byte ALRM1_MATCH_SEC = 0x0E;       // When seconds match
-constexpr inline byte ALRM1_MATCH_MIN_SEC =
-  0x0C; // When minutes and seconds match
-constexpr inline byte ALRM1_MATCH_HR_MIN_SEC =
-  0x08; // When hours, minutes, and seconds match
-constexpr inline byte ALRM1_MATCH_DT_HR_MIN_SEC =
-  0x00; // When date, hours, minutes, and seconds match
-
-constexpr inline byte ALRM2_ONCE_PER_MIN =
-  0x07; // Once per minute (00 seconds of every minute)
-constexpr inline byte ALRM2_MATCH_MIN = 0x06;    // When minutes match
-constexpr inline byte ALRM2_MATCH_HR_MIN = 0x04; // When hours and minutes match
-
-constexpr inline byte ALRM1_SET = ALRM1_MATCH_DT_HR_MIN_SEC;
-constexpr inline byte ALRM2_SET = ALRM2_MATCH_MIN;
-constexpr inline byte ALARM_BITS = ALRM1_SET;
-
-static DS3231 rtcclock;
-static RTClib rtclib;
+static RTC_DS3231 rtc;
 
 volatile bool rtc_wakeup = false;
 
@@ -45,6 +26,42 @@ format_time(const DateTime& dt)
   return time;
 }
 
+static void
+on_rtc_wakeup()
+{
+  msg_println(F("Woken up by RTC."));
+  rtc_wakeup = true;
+}
+
+bool
+init_rtc()
+{
+  if (!rtc.begin()) {
+    msg_println(F("Couldn't find RTC."));
+    return false;
+  }
+
+  // We're not using 32k pin
+  rtc.disable32K();
+
+  // Clear any existing alarms
+  rtc.clearAlarm(1);
+  rtc.clearAlarm(2);
+  rtc.disableAlarm(1);
+  rtc.disableAlarm(2);
+
+  // Stop oscillating signals at SQW Pin
+  // otherwise setAlarm1 will fail
+  rtc.writeSqwPinMode(DS3231_OFF);
+
+  pinMode(RTC_INTERRUPT_PIN, INPUT_PULLUP);
+  attachInterrupt(
+    digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_rtc_wakeup, FALLING);
+
+  msg_println(F("RTC module initialized."));
+  return true;
+}
+
 void
 init_rtc_time()
 {
@@ -57,78 +74,29 @@ init_rtc_time()
   msg_print(F("Initializing RTC time to: "));
   msg_println(format_time(utc).time);
 
-  rtcclock.setClockMode(false);
-  rtcclock.setYear(utc.year() - 2000);
-  rtcclock.setMonth(utc.month());
-  rtcclock.setDate(utc.day());
-  rtcclock.setHour(utc.hour());
-  rtcclock.setMinute(utc.minute());
-  rtcclock.setSecond(utc.second());
+  rtc.adjust(utc);
 
   msg_print(F("RTC time initialized to: "));
-  msg_println(format_time(rtclib.now()).time);
-}
-
-static void
-on_rtc_wakeup()
-{
-  msg_println(F("Woken up by RTC."));
-  rtc_wakeup = true;
+  msg_println(format_time(rtc.now()).time);
 }
 
 DateTime
 get_current_time()
 {
-  const auto now = rtclib.now();
+  const auto now = rtc.now();
   msg_print(F("Current time: "));
   msg_println(format_time(now).time);
   return now;
 }
 
-void
+bool
 set_alarm_time(const DateTime& now)
 {
   const DateTime dt_alarm(now.unixtime() + SLEEP_DURATION);
-  rtcclock.checkIfAlarm(1); // Reset the alarm bit
-  rtcclock.setA1Time(dt_alarm.day(),
-                     dt_alarm.hour(),
-                     dt_alarm.minute(),
-                     dt_alarm.second(),
-                     ALARM_BITS,
-                     false,
-                     false,
-                     false);
+  rtc.clearAlarm(1);
+  rtc.setAlarm1(dt_alarm, DS3231_A1_Second);
   msg_print(F("Alarm set for: "));
   msg_println(format_time(dt_alarm).time);
-}
-
-bool
-init_rtc()
-{
-  pinMode(RTC_INTERRUPT_PIN, INPUT_PULLUP);
-  attachInterrupt(
-    digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_rtc_wakeup, FALLING);
-
-  const DateTime dt_alarm(
-    rtclib.now().unixtime() +
-    10000); // Set an alarm that won't expire before being changed
-  rtcclock.setA1Time(dt_alarm.day(),
-                     dt_alarm.hour(),
-                     dt_alarm.minute(),
-                     dt_alarm.second(),
-                     ALARM_BITS,
-                     false,
-                     false,
-                     false);
-
-  rtcclock.checkIfAlarm(1); // Reset the alarm bit
-  rtcclock.turnOnAlarm(1);
-  if (rtcclock.checkAlarmEnabled(1)) {
-    msg_println(F("RTC alarm enabled."));
-    return true;
-  }
-  msg_println(F("Failed to enable RTC alarm."));
-  return false;
 }
 
 } // namespace cvslpr

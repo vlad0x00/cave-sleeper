@@ -1,7 +1,7 @@
 #ifndef CAVE_SLEEPER_RTC_HPP
 #define CAVE_SLEEPER_RTC_HPP
 
-#include <DS3231.h>
+#include <RTClib.h>
 
 namespace cvslpr {
 
@@ -15,17 +15,17 @@ struct FormattedTime
 FormattedTime
 format_time(const DateTime& dt);
 
+[[nodiscard]] bool
+init_rtc();
+
 void
 init_rtc_time();
 
-DateTime
+[[nodiscard]] DateTime
 get_current_time();
 
-void
-set_alarm_time(const DateTime& now);
-
 [[nodiscard]] bool
-init_rtc();
+set_alarm_time(const DateTime& now);
 
 } // namespace cvslpr
 
