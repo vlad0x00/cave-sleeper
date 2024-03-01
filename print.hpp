@@ -12,6 +12,8 @@ init_print()
 {
   if constexpr (PRINT_DEBUG) {
     Serial.begin(SERIAL_BAUD_RATE);
+    while (!Serial) {
+    }
   }
   return true;
 }
