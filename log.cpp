@@ -19,21 +19,20 @@ constexpr inline uint32_t ENDIANNESS_BYTES =
   (uint32_t(78) << 24) | (uint32_t(185) << 16) | (uint32_t(219) << 8) |
   (uint32_t(110));
 
-const char FormattedLogEntry::HEADER[] = "datetime,temperature,humidity\n";
+// TODO: Add other sensor readouts here
+const char FormattedLogEntry::HEADER[] = "datetime,temperature\n";
 const int FormattedLogEntry::TEMP_WIDTH = 6;
-const int FormattedLogEntry::HUM_WIDTH = 6;
 const int FormattedLogEntry::PRECISION = 2;
 
 FormattedLogEntry::FormattedLogEntry(const LogEntry& entry)
 {
+  // TODO: Write other sensor readouts here
   char temp_buf[TEMP_WIDTH];
-  char hum_buf[HUM_WIDTH];
   snprintf(data,
            sizeof(data),
-           "%s,%s,%s\n",
+           "%s,%s\n",
            format_time(entry.timestamp).time,
-           dtostrf(entry.temperature, 1, PRECISION, (char*)temp_buf),
-           dtostrf(entry.humidity, 1, PRECISION, (char*)hum_buf));
+           dtostrf(entry.temperature, 1, PRECISION, (char*)temp_buf));
   size = strlen(data);
 }
 
@@ -160,7 +159,7 @@ log(const SensorsReadout& readout, const DateTime& now)
 {
   const auto unixtime = now.unixtime();
 
-  const LogEntry entry(unixtime, readout.temp, readout.hum);
+  const LogEntry entry(unixtime, readout.temp);
 
   logfile.write((byte*)(&entry), sizeof(LogEntry));
   logfile.flush();

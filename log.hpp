@@ -15,28 +15,26 @@ struct LogEntry
 {
   uint32_t timestamp;
   double temperature;
-  double humidity;
+  // TODO: Other sensor readouts can be added here
+  // and to the constructor parameter list.
 
   LogEntry() = default;
 
-  LogEntry(const uint32_t timestamp,
-           const double temperature,
-           const double humidity)
+  LogEntry(const uint32_t timestamp, const double temperature)
     : timestamp(timestamp)
     , temperature(temperature)
-    , humidity(humidity)
   {
   }
 } __attribute__((packed));
 
 struct FormattedLogEntry
 {
-  static const char HEADER[sizeof("datetime,temperature,humidity\n")];
+  // TODO: Add any other sensor fields here
+  static const char HEADER[sizeof("datetime,temperature\n")];
   static const int TEMP_WIDTH;
-  static const int HUM_WIDTH;
   static const int PRECISION;
 
-  char data[sizeof("0000-00-00T00:00:00Z,000.00,000.00\n")];
+  char data[sizeof("0000-00-00T00:00:00Z,000.00\n")];
   size_t size{ 0 };
 
   FormattedLogEntry(const LogEntry& entry);

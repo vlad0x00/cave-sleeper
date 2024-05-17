@@ -11,30 +11,30 @@ static TMP117 tempsensor;
 bool
 init_sensors()
 {
-  return true;
-  // if (tempsensor.begin()) {
-  //   msg_println(F("Temperature sensor initialized."));
-  //   return true;
-  // }
-  // msg_println(F("Failed to initialize temperature sensor."));
-  // return false;
+  // TODO: Add any other sensor init here
+  if (tempsensor.begin()) {
+    msg_println(F("Temperature sensor initialized."));
+    return true;
+  }
+  msg_println(F("Failed to initialize temperature sensor."));
+  return false;
 }
 
 SensorsReadout
 measure()
 {
-  // Replace the following lines with actual sensor readouts
-  const double temp = 0.25; // tempsensor.readTempC();
-  const double hum = 0.5;
+  const double temp = tempsensor.readTempC();
+  // TODO: Add any other sensor readouts here
 
   msg_println(F("Measurements taken."));
   msg_print(F("Temperature = "));
   msg_print(temp);
   msg_println("C");
-  msg_print(F("Humidity = "));
-  msg_println(hum);
+  // TODO: Also print any other readouts, e.g. humidity
+  // msg_print(F("Humidity = "));
+  // msg_println(hum);
 
-  return SensorsReadout{ temp, hum };
+  return SensorsReadout{ temp };
 }
 
 } // namespace cvslpr

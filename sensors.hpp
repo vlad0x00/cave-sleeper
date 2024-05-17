@@ -5,14 +5,14 @@ namespace cvslpr {
 
 struct SensorsReadout
 {
-  SensorsReadout(const double temp, const double hum)
+  SensorsReadout(const double temp)
     : temp(temp)
-    , hum(hum)
   {
   }
 
   double temp = 0.0;
-  double hum = 0.0;
+  // TODO: Other sensor readouts can be added here
+  // and to the constructor parameter list.
 };
 
 [[nodiscard]] bool
