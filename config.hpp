@@ -15,8 +15,13 @@ constexpr inline int BLUETOOTH_INTERRUPT_PIN = 3;
 // The SD card chip select pin.
 constexpr inline int SD_CS_PIN = 4;
 
-constexpr inline int BLUETOOTH_RX_PIN = 5;
-constexpr inline int BLUETOOTH_TX_PIN = 6;
+// Pin to receive data on from the bluetooth module. This should be
+// connected to the TX pin of the module.
+constexpr inline int BLUETOOTH_RX_PIN = 6;
+
+// Pin to send data from the bluetooth module. This should be connected
+// to the RX pin of the module.
+constexpr inline int BLUETOOTH_TX_PIN = 5;
 
 // The following pin might be named "EN" on the bluetooth module.
 constexpr inline int BLUETOOTH_KEY_PIN = 7;
