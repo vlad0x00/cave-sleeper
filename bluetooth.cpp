@@ -97,8 +97,16 @@ bluetooth_transfer_data()
   LogEntry entry;
   while (load_log_entry(logfile, entry)) {
     FormattedLogEntry formatted_entry(entry);
-    bluetooth.write((const uint8_t*)(formatted_entry.data),
-                    formatted_entry.size);
+    if constexpr (PRINT_DEBUG) {
+      const auto written = bluetooth.write(
+        (const uint8_t*)(formatted_entry.data), formatted_entry.size);
+      if (written != formatted_entry.size) {
+        msg_println(F("Failed to write all data to bluetooth."));
+      }
+    } else {
+      bluetooth.write((const uint8_t*)(formatted_entry.data),
+                      formatted_entry.size);
+    }
   }
   bluetooth.flush();
 
