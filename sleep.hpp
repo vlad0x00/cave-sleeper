@@ -22,7 +22,7 @@ init_sleep();
     sleep_disable();                                                           \
   }                                                                            \
   sei();                                                                       \
-  msg_println(F("Done sleeping."));
+  msg_println(F("In awake mode."));
 
 } // namespace cvslpr
 
