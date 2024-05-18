@@ -7,39 +7,32 @@ namespace cvslpr {
 // to the following pin.
 constexpr inline int RTC_INTERRUPT_PIN = 2;
 
-// The bluetooth module should send a rising edge interrupt when it
-// connects to a device to the following pin. The pin is likely named
-// "STATE" on the bluetooth module.
-constexpr inline int BLUETOOTH_INTERRUPT_PIN = 3;
-
 // The SD card chip select pin.
 constexpr inline int SD_CS_PIN = 4;
 
-// Pin to receive data on from the bluetooth module. This should be
-// connected to the TX pin of the module.
-constexpr inline int BLUETOOTH_RX_PIN = 6;
+// The pin to which a physical switch should be attached to, which
+// should send a rising edge when turned on. This will indicate
+// to the microcontroller that the bluetooth module should be
+// turned on and ready to connect to the user's mobile device.
+// The physical switch should also enable power on bluetooth module.
+constexpr inline int BLUETOOTH_SWITCH_INTERRUPT_PIN = 3;
 
-// Pin to send data from the bluetooth module. This should be connected
-// to the RX pin of the module.
-constexpr inline int BLUETOOTH_TX_PIN = 5;
+// Pin on which bluetooth RX is connected on.
+constexpr inline int BLUETOOTH_RX_PIN = 5;
+
+// Pin on which bluetooth TX is connected on.
+constexpr inline int BLUETOOTH_TX_PIN = 6;
 
 // The following pin might be named "EN" on the bluetooth module.
 constexpr inline int BLUETOOTH_KEY_PIN = 7;
 
-// If true, a test is run for whether the bluetooth module is
-// working properly. If false, the bluetooth module is assumed
-// to be working properly. Requires BLUETOOTH_ON_PIN to be used.
-constexpr inline bool BLUETOOTH_TEST = false;
-
-// The microcontroller will set this pin to HIGH when it wants to
-// power on the bluetooth module and LOW when it wants to power it off.
-// This requires some sort of setup (e.g. a transistor) to actually
-// power the bluetooth module.
-constexpr inline int BLUETOOTH_ON_PIN = 8;
+// The pin which indicates whether or not the bluetooth module is
+// connected.
+constexpr inline int BLUETOOTH_STATE_PIN = 9;
 
 // The microcontroller will set this pin to HIGH when it wants to
 // turn on the LED.
-constexpr inline int LED_PIN = 13;
+constexpr inline int LED_PIN = 8;
 
 constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_CMD = 38400;
 constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_DATA = 9600;

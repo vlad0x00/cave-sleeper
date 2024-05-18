@@ -5,7 +5,7 @@
 
 namespace cvslpr {
 
-extern volatile bool rtc_wakeup;
+extern volatile bool rtc_interrupt_registered;
 
 struct FormattedTime
 {

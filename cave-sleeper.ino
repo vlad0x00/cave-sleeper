@@ -54,7 +54,7 @@ setup()
     go_sleep(true);
   }
 
-  rtc_wakeup = true;
+  rtc_interrupt_registered = true;
 }
 
 void
@@ -62,11 +62,11 @@ loop()
 {
   if constexpr (!INIT_RTC_TIME || INIT_RTC_TIME_AND_RUN) {
     if (status_good) {
-      if (bluetooth_wakeup) {
-        bluetooth_transfer_data();
-        bluetooth_wakeup = false;
+      if (bluetooth_switch_interrupt_registered) {
+        bluetooth_handle_transfer();
+        bluetooth_switch_interrupt_registered = false;
       }
-      if (rtc_wakeup) {
+      if (rtc_interrupt_registered) {
         const auto now = get_current_time();
         const auto readout = measure();
         log(readout, now);
@@ -75,10 +75,11 @@ loop()
           msg_println(F("Setting alarm failed."));
           led_signal_error_perpetual();
         }
-        rtc_wakeup = false;
+        rtc_interrupt_registered = false;
       }
 
-      go_sleep(!bluetooth_wakeup && !rtc_wakeup);
+      go_sleep(!bluetooth_switch_interrupt_registered &&
+               !rtc_interrupt_registered);
     }
   }
 }

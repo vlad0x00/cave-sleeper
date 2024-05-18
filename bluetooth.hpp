@@ -3,16 +3,13 @@
 
 namespace cvslpr {
 
-extern volatile bool bluetooth_wakeup;
+extern volatile bool bluetooth_switch_interrupt_registered;
 
 [[nodiscard]] bool
 init_bluetooth();
 
 void
-on_bluetooth_wakeup();
-
-void
-bluetooth_transfer_data();
+bluetooth_handle_transfer();
 
 } // namespace cvslpr
 

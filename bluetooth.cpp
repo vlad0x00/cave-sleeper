@@ -9,8 +9,8 @@
 
 namespace cvslpr {
 
-static SoftwareSerial bluetooth(BLUETOOTH_RX_PIN, BLUETOOTH_TX_PIN);
-volatile bool bluetooth_wakeup = false;
+static SoftwareSerial bluetooth(BLUETOOTH_TX_PIN, BLUETOOTH_RX_PIN);
+volatile bool bluetooth_switch_interrupt_registered = false;
 
 enum class BluetoothMode
 {
@@ -18,73 +18,54 @@ enum class BluetoothMode
   COMMAND
 };
 
+static const char* BLUETOOTH_MODE_NAMES[] = { "data", "command" };
+
 static void
-bluetooth_mode(const BluetoothMode mode)
+bluetooth_turn_on(const BluetoothMode mode)
 {
-  digitalWrite(BLUETOOTH_ON_PIN, LOW);
   digitalWrite(BLUETOOTH_KEY_PIN, mode == BluetoothMode::DATA ? LOW : HIGH);
   delay(300);
-  digitalWrite(BLUETOOTH_ON_PIN, HIGH);
   bluetooth.begin(mode == BluetoothMode::DATA ? BLUETOOTH_SERIAL_BAUD_RATE_DATA
                                               : BLUETOOTH_SERIAL_BAUD_RATE_CMD);
+  msg_print(F("Bluetooth turned on with "));
+  msg_print(BLUETOOTH_MODE_NAMES[static_cast<int>(mode)]);
+  msg_print(F(" mode."));
+}
+
+static void
+on_bluetooth_switch_interrupt()
+{
+  msg_println(F("Bluetooth switch interrupt registered."));
+  bluetooth_switch_interrupt_registered = true;
 }
 
 static bool
-test_bluetooth()
+wait_for_connection()
 {
-  // Check if the module responds
-  bluetooth.write(F("AT\r\n"));
-  bluetooth.flush();
-
-  // Let the bluetooth module respond
-  delay(500);
-
-  // Ensure that the response is "OK"
-  if (!bluetooth.available() || bluetooth.read() != 'O' ||
-      !bluetooth.available() || bluetooth.read() != 'K') {
-    return false;
-  }
-  // Discard the rest of the response
-  while (bluetooth.available()) {
-    bluetooth.read();
-  }
-
-  return true;
-}
-
-bool
-init_bluetooth()
-{
-  pinMode(BLUETOOTH_KEY_PIN, OUTPUT);
-  pinMode(BLUETOOTH_ON_PIN, OUTPUT);
-
-  if constexpr (BLUETOOTH_TEST) {
-    if (!test_bluetooth()) {
-      bluetooth_mode(BluetoothMode::COMMAND);
-      msg_println(F("Bluetooth module not responding."));
+  msg_println(F("Waiting for bluetooth connection..."));
+  bool connected = false;
+  for (;;) {
+    if (digitalRead(BLUETOOTH_STATE_PIN) == HIGH) {
+      return true;
+    }
+    if (digitalRead(BLUETOOTH_SWITCH_INTERRUPT_PIN) == HIGH) {
+      msg_println("Bluetooth switched off while waiting for connection.");
       return false;
     }
   }
-
-  bluetooth_mode(BluetoothMode::DATA);
-
-  pinMode(BLUETOOTH_INTERRUPT_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(BLUETOOTH_INTERRUPT_PIN),
-                  on_bluetooth_wakeup,
-                  RISING);
-
-  msg_println(F("Bluetooth module initialized."));
-  return true;
 }
 
-void
-on_bluetooth_wakeup()
+static void
+wait_for_off()
 {
-  msg_println(F("Woken up by bluetooth."));
-  bluetooth_wakeup = true;
+  msg_println(F("Waiting for bluetooth module to be turned off..."));
+  while (digitalRead(BLUETOOTH_SWITCH_INTERRUPT_PIN) == HIGH) {
+  }
+  // The delay prevents multiple interrupt triggers being handled
+  delay(200);
 }
 
-void
+static void
 bluetooth_transfer_data()
 {
   auto logfile = open_log();
@@ -111,6 +92,31 @@ bluetooth_transfer_data()
   bluetooth.flush();
 
   logfile.close();
+}
+
+bool
+init_bluetooth()
+{
+  pinMode(BLUETOOTH_KEY_PIN, OUTPUT);
+  pinMode(BLUETOOTH_STATE_PIN, INPUT);
+  pinMode(BLUETOOTH_SWITCH_INTERRUPT_PIN, INPUT);
+
+  attachInterrupt(digitalPinToInterrupt(BLUETOOTH_SWITCH_INTERRUPT_PIN),
+                  on_bluetooth_switch_interrupt,
+                  RISING);
+
+  msg_println(F("Bluetooth initialized."));
+  return true;
+}
+
+void
+bluetooth_handle_transfer()
+{
+  bluetooth_turn_on(BluetoothMode::DATA);
+  if (wait_for_connection()) {
+    bluetooth_transfer_data();
+    wait_for_off();
+  }
 }
 
 } // namespace cvslpr

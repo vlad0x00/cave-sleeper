@@ -9,7 +9,7 @@ namespace cvslpr {
 
 static RTC_DS3231 rtc;
 
-volatile bool rtc_wakeup = false;
+volatile bool rtc_interrupt_registered = false;
 
 FormattedTime
 format_time(const DateTime& dt)
@@ -27,10 +27,10 @@ format_time(const DateTime& dt)
 }
 
 static void
-on_rtc_wakeup()
+on_rtc_interrupt()
 {
-  msg_println(F("Woken up by RTC."));
-  rtc_wakeup = true;
+  msg_println(F("RTC interrupt registered."));
+  rtc_interrupt_registered = true;
 }
 
 bool
@@ -56,7 +56,7 @@ init_rtc()
 
   pinMode(RTC_INTERRUPT_PIN, INPUT_PULLUP);
   attachInterrupt(
-    digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_rtc_wakeup, FALLING);
+    digitalPinToInterrupt(RTC_INTERRUPT_PIN), on_rtc_interrupt, FALLING);
 
   msg_println(F("RTC module initialized."));
   return true;
