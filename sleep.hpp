@@ -21,7 +21,8 @@ init_sleep();
     sleep_cpu();                                                               \
     sleep_disable();                                                           \
   }                                                                            \
-  sei();
+  sei();                                                                       \
+  msg_println(F("Done sleeping."));
 
 } // namespace cvslpr
 
