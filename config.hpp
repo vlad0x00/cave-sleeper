@@ -39,13 +39,13 @@ constexpr inline int BLUETOOTH_ON_PIN = 8;
 
 // The microcontroller will set this pin to HIGH when it wants to
 // turn on the LED.
-constexpr inline int LED_PIN = 9;
+constexpr inline int LED_PIN = 13;
 
 constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_CMD = 38400;
 constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_DATA = 9600;
 
 // Change to true to print debug messages to serial port.
-constexpr inline bool PRINT_DEBUG = true;
+constexpr inline bool PRINT_DEBUG = false;
 
 constexpr inline long SERIAL_BAUD_RATE = 9600;
 
@@ -62,7 +62,7 @@ constexpr inline bool RESUME_PREVIOUS_LOG = false;
 // Offset from UTC for the computer this code is compiled on.
 // This is needed in order to determine the current UTC time
 // to upload it to the RTC.
-constexpr inline int COMPILATION_TIMEZONE = -7;
+constexpr inline int COMPILATION_TIMEZONE = +2;
 
 constexpr inline int SLEEP_DURATION = 15 * 60; // In seconds
 
@@ -74,7 +74,7 @@ constexpr inline bool INIT_RTC_TIME = false;
 
 // Set to true to both initialize RTC time and run the regular functionality
 // immediately after. Useful for debugging. Implies INIT_RTC_TIME.
-constexpr inline bool INIT_RTC_TIME_AND_RUN = true;
+constexpr inline bool INIT_RTC_TIME_AND_RUN = false;
 
 } // namespace cvslpr
 
