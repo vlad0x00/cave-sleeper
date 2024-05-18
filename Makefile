@@ -15,6 +15,15 @@ upload:
 monitor:
 	arduino-cli monitor -b $(BOARD) -p $(PORT)
 
+set-rtc:
+	sed -i 's/INIT_RTC_TIME = false/INIT_RTC_TIME = true/' config.hpp
+	$(MAKE) compile
+	$(MAKE) upload
+	sleep 15;
+	sed -i 's/INIT_RTC_TIME = true/INIT_RTC_TIME = false/' config.hpp
+	$(MAKE) compile
+	$(MAKE) upload
+
 format:
 	clang-format -i --style=Mozilla *.ino *.hpp *.cpp
 

@@ -38,7 +38,7 @@ constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_CMD = 38400;
 constexpr inline long BLUETOOTH_SERIAL_BAUD_RATE_DATA = 9600;
 
 // Change to true to print debug messages to serial port.
-constexpr inline bool PRINT_DEBUG = true;
+constexpr inline bool PRINT_DEBUG = false;
 
 constexpr inline long SERIAL_BAUD_RATE = 9600;
 
