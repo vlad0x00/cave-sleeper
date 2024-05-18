@@ -94,7 +94,7 @@ set_alarm_time(const DateTime& now)
 {
   const DateTime dt_alarm(now.unixtime() + SLEEP_DURATION);
   rtc.clearAlarm(1);
-  if (!rtc.setAlarm1(dt_alarm, DS3231_A1_Second)) {
+  if (!rtc.setAlarm1(dt_alarm, DS3231_A1_Date)) {
     msg_println(F("Failed to set alarm."));
     return false;
   }
