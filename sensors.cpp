@@ -29,7 +29,7 @@ measure()
   msg_println(F("Measurements taken."));
   msg_print(F("Temperature = "));
   msg_print(temp);
-  msg_println("C");
+  msg_println(F("C"));
   // TODO: Also print any other readouts, e.g. humidity
   // msg_print(F("Humidity = "));
   // msg_println(hum);

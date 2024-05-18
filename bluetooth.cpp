@@ -46,10 +46,11 @@ wait_for_connection()
   bool connected = false;
   for (;;) {
     if (digitalRead(BLUETOOTH_STATE_PIN) == HIGH) {
+      msg_println(F("Bluetooth connected."));
       return true;
     }
     if (digitalRead(BLUETOOTH_SWITCH_INTERRUPT_PIN) == HIGH) {
-      msg_println("Bluetooth switched off while waiting for connection.");
+      msg_println(F("Bluetooth switched off while waiting for connection."));
       return false;
     }
   }
@@ -74,6 +75,7 @@ bluetooth_transfer_data()
     return;
   }
 
+  msg_println(F("Transferring data..."));
   bluetooth.write(FormattedLogEntry::HEADER);
   LogEntry entry;
   while (load_log_entry(logfile, entry)) {
@@ -92,6 +94,7 @@ bluetooth_transfer_data()
   bluetooth.flush();
 
   logfile.close();
+  msg_println(F("Data transfer done."));
 }
 
 bool
