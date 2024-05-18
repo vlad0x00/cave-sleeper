@@ -36,10 +36,12 @@ setup()
   if (!init_i2c() || !init_sleep() || !init_log() || !init_rtc() ||
       !init_sensors() || !init_bluetooth()) {
     status_good = false;
-    msg_println(F("Initialization failed."));
+    msg_println(F("===========================\nInitialization "
+                  "failed.\n==========================="));
     led_signal_error_perpetual();
   }
-  msg_println(F("Initialization successful."));
+  msg_println(F("===========================\nInitialization "
+                "successful.\n==========================="));
   led_signal_good();
 
   // Should RTC be initialized?
