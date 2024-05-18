@@ -29,7 +29,7 @@ bluetooth_turn_on(const BluetoothMode mode)
                                               : BLUETOOTH_SERIAL_BAUD_RATE_CMD);
   msg_print(F("Bluetooth turned on with "));
   msg_print(BLUETOOTH_MODE_NAMES[static_cast<int>(mode)]);
-  msg_print(F(" mode."));
+  msg_println(F(" mode."));
 }
 
 static void
@@ -42,6 +42,8 @@ on_bluetooth_switch_interrupt()
 static bool
 wait_for_connection()
 {
+  // Let the signal settle
+  delay(200);
   msg_println(F("Waiting for bluetooth connection..."));
   bool connected = false;
   for (;;) {
@@ -49,7 +51,7 @@ wait_for_connection()
       msg_println(F("Bluetooth connected."));
       return true;
     }
-    if (digitalRead(BLUETOOTH_SWITCH_INTERRUPT_PIN) == HIGH) {
+    if (digitalRead(BLUETOOTH_SWITCH_INTERRUPT_PIN) == LOW) {
       msg_println(F("Bluetooth switched off while waiting for connection."));
       return false;
     }
